@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:5000/api";
 const PAGE_SIZE = 8;
 
 // ─── API HELPERS ────────────────────────────────────────────────────────────

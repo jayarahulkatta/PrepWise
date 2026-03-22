@@ -429,6 +429,10 @@ app.post('/api/evaluate', async (req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
-  console.log(`🚀 PrepWise backend running (Local AI) on http://localhost:${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`🚀 PrepWise backend running (Local AI) on http://localhost:${port}`);
+  });
+}
+
+module.exports = app;

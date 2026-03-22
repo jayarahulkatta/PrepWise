@@ -218,7 +218,6 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState("helpful");
   const [page, setPage] = useState(1);
-  const [fetchTrigger, setFetchTrigger] = useState(0);
 
   // User data
   const [bookmarks, setBookmarks] = useState(new Set());
@@ -251,7 +250,7 @@ export default function App() {
     apiFetch(`${API_BASE}/questions?${params}`).then(data => {
       setQuestions(data.questions); setTotalPages(data.totalPages); setTotal(data.total); setLoaded(true);
     }).catch(err => { console.error(err); setLoaded(true); });
-  }, [filterJob, filterType, filterExp, filterDiff, search, sortMode, page, fetchTrigger]);
+  }, [filterJob, filterType, filterExp, filterDiff, search, sortMode, page]);
 
   // Load ALL questions for mock/chat
   useEffect(() => {

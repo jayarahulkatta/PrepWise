@@ -1,10 +1,345 @@
-// ─── LOCAL AI ANSWER GENERATOR ──────────────────────────────────────────────
+// ─── ADVANCED LOCAL AI ANSWER GENERATOR v2.0 ────────────────────────────────
 // Generates interview answers locally without any API key.
-// Uses smart templates, keyword detection, and Wikipedia integration for facts.
+// Uses multi-source web search (DuckDuckGo Instant Answer API + Wikipedia API),
+// smart keyword extraction, pattern matching, and natural answer synthesis.
 const https = require('https');
+const http = require('http');
 
+// ─── INTELLIGENT KEYWORD EXTRACTOR ──────────────────────────────────────────
+// Preserves multi-word tech terms like "Spring Boot", "React hooks", etc.
+function extractSearchQuery(questionText) {
+  // First, try to preserve important multi-word technical terms
+  const techTerms = [
+    'spring boot', 'auto-configuration', 'auto configuration', 'spring framework',
+    'react hooks', 'react native', 'react router', 'virtual dom',
+    'node.js', 'express.js', 'next.js', 'vue.js', 'angular.js',
+    'machine learning', 'deep learning', 'neural network', 'natural language',
+    'object oriented', 'design pattern', 'factory pattern', 'singleton pattern',
+    'dependency injection', 'inversion of control',
+    'binary search', 'linked list', 'hash map', 'hash table', 'binary tree',
+    'red black tree', 'b tree', 'avl tree',
+    'big o', 'time complexity', 'space complexity',
+    'rest api', 'restful api', 'graphql api', 'web socket',
+    'sql injection', 'cross site', 'xss attack',
+    'docker container', 'kubernetes', 'ci cd', 'continuous integration',
+    'unit test', 'integration test', 'test driven',
+    'microservice', 'monolithic', 'event driven', 'message queue',
+    'garbage collection', 'memory management', 'stack overflow',
+    'thread safe', 'race condition', 'deadlock',
+    'oauth', 'jwt token', 'session management',
+    'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch',
+    'aws lambda', 'serverless', 'cloud computing',
+    'agile', 'scrum', 'kanban', 'devops',
+    'solid principles', 'dry principle', 'kiss principle',
+    'polymorphism', 'encapsulation', 'abstraction', 'inheritance',
+    'java virtual machine', 'jvm', 'class loader',
+    'tcp ip', 'http https', 'dns', 'load balancer',
+    'data structure', 'algorithm', 'recursion', 'dynamic programming',
+    'git branch', 'version control', 'merge conflict',
+  ];
+
+  let query = questionText.toLowerCase();
+
+  // Remove filler words but keep multi-word tech terms intact
+  const stopWords = ['what', 'is', 'are', 'the', 'pros', 'cons', 'of', 'in', 'vs',
+    'and', 'or', 'how', 'to', 'do', 'does', 'explain', 'describe', 'difference',
+    'between', 'can', 'you', 'it', 'for', 'with', 'on', 'at', 'from', 'by', 'an',
+    'a', 'tell', 'me', 'about', 'work', 'internally', 'under', 'hood', 'why',
+    'when', 'where', 'which', 'should', 'would', 'could', 'please', 'use', 'used',
+    'using', 'your', 'its', 'this', 'that', 'these', 'those', 'there', 'their',
+    'them', 'they', 'will', 'have', 'has', 'had', 'been', 'being', 'was', 'were',
+    'not', 'but', 'also', 'just', 'some', 'any', 'much', 'many', 'more', 'most',
+    'very', 'really', 'actually', 'basically'];
+
+  // Find preserved tech terms in the query
+  const foundTerms = [];
+  for (const term of techTerms) {
+    if (query.includes(term)) {
+      foundTerms.push(term);
+    }
+  }
+
+  // If we found specific tech terms, use them as the search query
+  if (foundTerms.length > 0) {
+    return foundTerms.join(' ') + ' programming';
+  }
+
+  // Otherwise, do intelligent word extraction
+  const words = query.replace(/[?.,!;:'"()[\]{}]/g, ' ').split(/\s+/)
+    .filter(w => w.length > 2 && !stopWords.includes(w));
+
+  return words.slice(0, 5).join(' ');
+}
+
+// ─── DUCKDUCKGO INSTANT ANSWER API ──────────────────────────────────────────
+// Uses the structured JSON API (not HTML scraping) for reliable results
+function fetchDDGInstantAnswer(queryText) {
+  return new Promise((resolve) => {
+    const searchQuery = extractSearchQuery(queryText);
+    if (!searchQuery) return resolve(null);
+
+    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&no_html=1&skip_disambig=1`;
+
+    https.get(url, { headers: { 'User-Agent': 'PrepWise/2.0 (Interview Prep App)' } }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+
+          // Priority 1: AbstractText (best quality summary)
+          if (parsed.AbstractText && parsed.AbstractText.length > 50) {
+            resolve({ text: parsed.AbstractText, source: parsed.AbstractSource || 'DuckDuckGo' });
+            return;
+          }
+
+          // Priority 2: Answer field (direct factual answers)
+          if (parsed.Answer && parsed.Answer.length > 20) {
+            resolve({ text: parsed.Answer, source: 'DuckDuckGo' });
+            return;
+          }
+
+          // Priority 3: Definition
+          if (parsed.Definition && parsed.Definition.length > 30) {
+            resolve({ text: parsed.Definition, source: parsed.DefinitionSource || 'DuckDuckGo' });
+            return;
+          }
+
+          // Priority 4: First RelatedTopic with a good text
+          if (parsed.RelatedTopics && parsed.RelatedTopics.length > 0) {
+            for (const topic of parsed.RelatedTopics) {
+              if (topic.Text && topic.Text.length > 50) {
+                resolve({ text: topic.Text, source: 'DuckDuckGo' });
+                return;
+              }
+            }
+          }
+
+          resolve(null);
+        } catch { resolve(null); }
+      });
+    }).on('error', () => resolve(null));
+
+    // Timeout after 4 seconds
+    setTimeout(() => resolve(null), 4000);
+  });
+}
+
+// ─── WIKIPEDIA API (IMPROVED) ───────────────────────────────────────────────
+// Uses the full question as search query for better relevance
+function fetchWikipediaSummary(queryText) {
+  return new Promise((resolve) => {
+    const searchQuery = extractSearchQuery(queryText);
+    if (!searchQuery) return resolve(null);
+
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchQuery)}&utf8=&format=json&srlimit=3`;
+
+    https.get(searchUrl, { headers: { 'User-Agent': 'PrepWise/2.0 (Interview Prep App)' } }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (!parsed.query || !parsed.query.search || parsed.query.search.length === 0) {
+            return resolve(null);
+          }
+
+          // Pick the best matching result — check title relevance
+          let bestResult = null;
+          const queryLower = searchQuery.toLowerCase();
+          for (const result of parsed.query.search) {
+            const titleLower = result.title.toLowerCase();
+            // Check if the article title is relevant to the search
+            if (queryLower.split(' ').some(word => word.length > 3 && titleLower.includes(word))) {
+              bestResult = result;
+              break;
+            }
+          }
+          // Fallback to first result if no title match
+          if (!bestResult) bestResult = parsed.query.search[0];
+
+          const pageId = bestResult.pageid;
+          const summaryUrl = `https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&pageids=${pageId}`;
+
+          https.get(summaryUrl, { headers: { 'User-Agent': 'PrepWise/2.0 (Interview Prep App)' } }, (sumRes) => {
+            let sumData = '';
+            sumRes.on('data', chunk => sumData += chunk);
+            sumRes.on('end', () => {
+              try {
+                const sumParsed = JSON.parse(sumData);
+                const pages = sumParsed.query.pages;
+                const extract = pages[pageId].extract;
+
+                if (extract && extract.length > 50) {
+                  // Return first 3-4 sentences
+                  const sentences = extract.split(/(?<=[.!?])\s+/);
+                  const shortSummary = sentences.slice(0, 4).join(' ');
+                  resolve({ text: shortSummary, source: 'Wikipedia' });
+                } else {
+                  resolve(null);
+                }
+              } catch { resolve(null); }
+            });
+          }).on('error', () => resolve(null));
+        } catch { resolve(null); }
+      });
+    }).on('error', () => resolve(null));
+
+    setTimeout(() => resolve(null), 5000);
+  });
+}
+
+// ─── DUCKDUCKGO HTML SEARCH (LAST RESORT) ───────────────────────────────────
+// Scrapes multiple results and picks the most relevant snippet
+function fetchDDGHtmlSearch(queryText) {
+  return new Promise((resolve) => {
+    const searchQuery = extractSearchQuery(queryText);
+    if (!searchQuery) return resolve(null);
+
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(searchQuery + ' explained')}`;
+
+    https.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    }, (res) => {
+      // Handle redirects
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return resolve(null);
+      }
+
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          // Extract ALL snippets, not just the first one
+          const snippetRegex = /<a class="result__snippet[^>]*>([\s\S]*?)<\/a>/g;
+          const snippets = [];
+          let match;
+
+          while ((match = snippetRegex.exec(data)) !== null && snippets.length < 5) {
+            let snippet = match[1]
+              .replace(/<[^>]+>/g, '')
+              .replace(/&#x27;/g, "'")
+              .replace(/&quot;/g, '"')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .trim();
+
+            if (snippet.length > 40) {
+              snippets.push(snippet);
+            }
+          }
+
+          if (snippets.length === 0) return resolve(null);
+
+          // Score each snippet for relevance to the original question
+          const queryWords = searchQuery.toLowerCase().split(/\s+/);
+          let bestSnippet = snippets[0];
+          let bestScore = 0;
+
+          for (const snippet of snippets) {
+            const snippetLower = snippet.toLowerCase();
+            let score = 0;
+            for (const word of queryWords) {
+              if (word.length > 3 && snippetLower.includes(word)) {
+                score += 2;
+              }
+            }
+            // Bonus for longer, more informative snippets
+            if (snippet.length > 100) score += 1;
+            if (snippet.length > 200) score += 1;
+
+            if (score > bestScore) {
+              bestScore = score;
+              bestSnippet = snippet;
+            }
+          }
+
+          resolve({ text: bestSnippet, source: 'Web Search' });
+        } catch { resolve(null); }
+      });
+    }).on('error', () => resolve(null));
+
+    setTimeout(() => resolve(null), 5000);
+  });
+}
+
+// ─── MULTI-SOURCE FACT FINDER ───────────────────────────────────────────────
+// Tries multiple sources in parallel and picks the best result
+async function findFactAboutQuestion(questionText) {
+  try {
+    // Run DuckDuckGo Instant Answer and Wikipedia in parallel
+    const [ddgResult, wikiResult] = await Promise.all([
+      fetchDDGInstantAnswer(questionText),
+      fetchWikipediaSummary(questionText),
+    ]);
+
+    // Priority 1: DuckDuckGo Instant Answer (most reliable structured data)
+    if (ddgResult && ddgResult.text && ddgResult.text.length > 50) {
+      return ddgResult;
+    }
+
+    // Priority 2: Wikipedia (good for well-known concepts)
+    if (wikiResult && wikiResult.text && wikiResult.text.length > 50) {
+      return wikiResult;
+    }
+
+    // Priority 3: DuckDuckGo HTML scraping (last resort, with relevance scoring)
+    const htmlResult = await fetchDDGHtmlSearch(questionText);
+    if (htmlResult && htmlResult.text && htmlResult.text.length > 40) {
+      return htmlResult;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── ANSWER SYNTHESIZER ─────────────────────────────────────────────────────
+// Takes a raw fact and weaves it into a natural interview-style answer
+function synthesizeAnswer(questionText, fact, type, role) {
+  const factText = fact.text;
+  const source = fact.source;
+
+  // Different opening styles for variety
+  const openings = [
+    `That's a great question, and it's something I've worked with extensively.`,
+    `Absolutely, this is a topic I find really interesting and have solid experience with.`,
+    `Great question! Let me walk you through my understanding of this.`,
+    `I'd love to answer that — it's a fundamental concept I've applied in my projects.`,
+    `Sure, this is something I've dealt with hands-on in multiple projects.`
+  ];
+
+  const closings = [
+    `\n\nIn my projects, I've applied this knowledge practically, and I believe having this strong conceptual foundation helps me write cleaner, more maintainable code.`,
+    `\n\nI've used this understanding in real-world scenarios, and it's been foundational to building scalable, efficient solutions.`,
+    `\n\nThis is one of those concepts where practical experience really solidifies the theory, and my project work has given me that solid grounding.`,
+    `\n\nI find that truly understanding these fundamentals — not just memorizing them — is what sets apart a good developer, and I strive to maintain that depth of knowledge.`,
+    `\n\nOverall, my hands-on experience with this has made me confident in applying these concepts effectively in production environments.`
+  ];
+
+  // Use question hash for consistent but varied selection
+  const hash = questionText.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const opening = openings[hash % openings.length];
+  const closing = closings[(hash + 1) % closings.length];
+
+  // Truncate fact if too long (keep first ~400 chars at sentence boundary)
+  let trimmedFact = factText;
+  if (trimmedFact.length > 400) {
+    const sentences = trimmedFact.split(/(?<=[.!?])\s+/);
+    trimmedFact = '';
+    for (const sentence of sentences) {
+      if ((trimmedFact + sentence).length > 400) break;
+      trimmedFact += (trimmedFact ? ' ' : '') + sentence;
+    }
+  }
+
+  return `${opening}\n\n${trimmedFact}${closing}`;
+}
+
+// ─── ANSWER TEMPLATES ───────────────────────────────────────────────────────
 const ANSWER_TEMPLATES = {
-  // ── TECHNICAL ANSWERS ─────────────────────────────────────────────────────
   Technical: {
     default: [
       `That's a great question. In my experience working with this technology, I've developed a solid understanding of the core concepts. Let me walk you through how I approach this.\n\nFirst, I always start by understanding the fundamentals. Whether it's a design decision or a technical implementation, having a strong foundation matters. In my projects, I've applied these principles practically — for instance, during my final year project, I had to make critical architecture decisions that taught me the importance of scalability and maintainability.\n\nI also believe in staying current with best practices. I regularly read technical blogs, follow open-source projects, and practice coding challenges. This habit has helped me not just in interviews but in building production-ready solutions.\n\nOverall, I'd say my strength lies in combining theoretical knowledge with hands-on experience to deliver clean, efficient solutions.`,
@@ -30,7 +365,6 @@ const ANSWER_TEMPLATES = {
     },
   },
 
-  // ── HR ANSWERS ────────────────────────────────────────────────────────────
   HR: {
     default: [
       `Thank you for that question. I believe this is really about understanding what drives me as a professional, and I'm happy to share.\n\nWhat motivates me most is the opportunity to solve meaningful problems through technology. When I look at Genpact's work in digital transformation — helping enterprises modernize their operations — I see a perfect alignment with my passion. I want to be part of a team that creates tangible impact for businesses and their customers.\n\nAs a person, I'd describe myself as naturally curious and persistent. When I start working on something, I don't just stop at the surface level. I dig deeper to understand the "why." My teammates have often told me that they appreciate my thoroughness and willingness to help others when they're stuck.\n\nI also value work-life balance and emotional intelligence in the workplace. I believe that great work comes from healthy, collaborative environments. I'm the kind of person who celebrates team wins as much as individual achievements.\n\nLooking forward, I'm excited about the growth opportunities here and I'm ready to contribute meaningfully from day one.`,
@@ -52,7 +386,6 @@ const ANSWER_TEMPLATES = {
     },
   },
 
-  // ── BEHAVIORAL ANSWERS ────────────────────────────────────────────────────
   Behavioral: {
     default: [
       `Let me share a relevant experience. During my final year project, our team faced a significant challenge when the main API we were using deprecated a critical feature just two weeks before our submission deadline.\n\nI took the initiative to research alternatives and found a suitable replacement. However, integrating it required restructuring a significant portion of our codebase. I organized a team meeting, laid out the plan, and divided the work based on each person's strengths.\n\nWe worked intensively for a week, with daily stand-ups to track progress and address blockers. I personally handled the most complex integration part while also reviewing my teammates' code to ensure consistency.\n\nThe result? We not only met our deadline but also received appreciation from our professor for the clean architecture of our solution. This experience taught me that challenges are opportunities in disguise, and that effective communication and teamwork can overcome almost any obstacle.`,
@@ -66,7 +399,6 @@ const ANSWER_TEMPLATES = {
     },
   },
 
-  // ── BACKGROUND ANSWERS ────────────────────────────────────────────────────
   Background: {
     default: [
       `I'd be happy to walk you through my background. I completed my education in Computer Science, where I developed a strong foundation in programming, data structures, algorithms, and software engineering principles.\n\nDuring my academic journey, I completed several significant projects that gave me practical experience. My capstone project was a full-stack web application that I built using React, Node.js, and MongoDB. It taught me the entire software development lifecycle — from requirement gathering and design to implementation, testing, and deployment.\n\nI also participated in coding competitions and hackathons, which sharpened my problem-solving skills and taught me to work effectively under time pressure. These experiences, combined with my coursework in DBMS, Operating Systems, and Computer Networks, give me a well-rounded technical foundation.\n\nOutside of academics, I'm actively involved in tech communities. I contribute to open-source projects and write technical blog posts, which helps me stay current with industry trends and continuously improve my skills.\n\nI believe this combination of strong fundamentals, practical experience, and passion for learning makes me well-prepared for a career in technology.`,
@@ -81,7 +413,6 @@ const ANSWER_TEMPLATES = {
 function applyTone(answer, tone) {
   switch (tone) {
     case 'concise':
-      // Shorten to ~3 sentences per paragraph, keep only first 2 paragraphs
       const sentences = answer.split(/(?<=[.!?])\s+/);
       return sentences.slice(0, Math.min(6, sentences.length)).join(' ');
 
@@ -106,87 +437,6 @@ function applyTone(answer, tone) {
   }
 }
 
-// ─── WIKIPEDIA FACT FETCHER ──────────────────────────────────────────────────
-function fetchWikipediaSummary(queryText) {
-  return new Promise((resolve) => {
-    // Extract core keywords from question (very basic stop-word removal)
-    const stopWords = ['what', 'is', 'are', 'the', 'pros', 'cons', 'of', 'in', 'vs', 'and', 'or', 'how', 'to', 'do', 'does', 'explain', 'describe', 'difference', 'between', 'can', 'you'];
-    const keywords = queryText.toLowerCase().split(/[\s?.,]+/).filter(w => w.length > 2 && !stopWords.includes(w)).join(' ');
-    
-    if (!keywords) return resolve(null);
-
-    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keywords)}&utf8=&format=json`;
-    
-    https.get(searchUrl, { headers: { 'User-Agent': 'NodeJS/PrepWiseLocalAI' } }, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.query && parsed.query.search && parsed.query.search.length > 0) {
-            const pageId = parsed.query.search[0].pageid;
-            // Now fetch the actual summary
-            const summaryUrl = `https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&pageids=${pageId}`;
-            
-            https.get(summaryUrl, { headers: { 'User-Agent': 'NodeJS/PrepWiseLocalAI' } }, (sumRes) => {
-              let sumData = '';
-              sumRes.on('data', chunk => sumData += chunk);
-              sumRes.on('end', () => {
-                try {
-                  const sumParsed = JSON.parse(sumData);
-                  const pages = sumParsed.query.pages;
-                  const extract = pages[pageId].extract;
-                  
-                  // Return the first 2-3 sentences max (approx 300 chars)
-                  if (extract) {
-                    const sentences = extract.split(/(?<=[.!?])\s+/);
-                    const shortSummary = sentences.slice(0, 3).join(' ');
-                    resolve(shortSummary);
-                  } else {
-                    resolve(null);
-                  }
-                } catch { resolve(null); }
-              });
-            }).on('error', () => resolve(null));
-          } else {
-            resolve(null);
-          }
-        } catch { resolve(null); }
-      });
-    }).on('error', () => resolve(null));
-  });
-}
-
-// ─── DUCKDUCKGO WEB SEARCH FETCHER ─────────────────────────────────────────
-function fetchWebSearchSummary(queryText) {
-  return new Promise((resolve) => {
-    // We can use the full query for a web search
-    const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(queryText)}`;
-    
-    https.get(searchUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          // Extract the first snippet from DuckDuckGo Lite HTML
-          const match = data.match(/<a class="result__snippet[^>]*>([\s\S]*?)<\/a>/);
-          if (match && match[1]) {
-            // Remove HTML tags (like <b> nodes) and decode common entities
-            let snippet = match[1].replace(/<[^>]+>/g, '')
-                                  .replace(/&#x27;/g, "'")
-                                  .replace(/&quot;/g, '"')
-                                  .replace(/&amp;/g, '&')
-                                  .trim();
-            resolve(snippet);
-          } else {
-            resolve(null);
-          }
-        } catch { resolve(null); }
-      });
-    }).on('error', () => resolve(null));
-  });
-}
-
 // ─── FIND BEST MATCHING ANSWER ──────────────────────────────────────────────
 function findPatternMatch(text, patterns) {
   for (const [pattern, answer] of Object.entries(patterns)) {
@@ -196,35 +446,32 @@ function findPatternMatch(text, patterns) {
   return null;
 }
 
-// ─── MAIN GENERATOR ────────────────────────────────────────────────────────
+// ─── MAIN GENERATOR v2.0 ───────────────────────────────────────────────────
 async function generateAnswer(questionText, type = 'Technical', tone = 'confident', role = '', company = 'Genpact') {
   const category = ANSWER_TEMPLATES[type] || ANSWER_TEMPLATES.Technical;
 
   let answer = null;
 
-  // Technical questions: try DuckDuckGo Web Search first, then Wikipedia
+  // 1. For technical questions, try to find real facts from the web
   if (type === 'Technical') {
-    let fact = await fetchWebSearchSummary(questionText);
-    
-    // If Web Search fails or returns no fact, perform a Wikipedia search
-    if (!fact || fact.length < 30) {
-      fact = await fetchWikipediaSummary(questionText);
-    }
-
-    if (fact && fact.length > 30) {
-      answer = `That's a great technical question. I believe understanding the core concepts is crucial here.\n\nBased on standard principles and my understanding: ${fact}\n\nIn my practical experience, knowing these distinctions helps in making the right architectural and design decisions for robust applications.`;
+    try {
+      const fact = await findFactAboutQuestion(questionText);
+      if (fact && fact.text && fact.text.length > 50) {
+        answer = synthesizeAnswer(questionText, fact, type, role);
+      }
+    } catch (err) {
+      console.error('Web search failed, falling back to templates:', err.message);
     }
   }
 
-  // If no fact was found or it's not a technical question, try pattern matching
+  // 2. If no web answer, try pattern matching against our curated templates
   if (!answer) {
     answer = findPatternMatch(questionText, category.patterns || {});
   }
 
-  // Fall back to random default
+  // 3. Fall back to a random default template
   if (!answer) {
     const defaults = category.default;
-    // Use question text hash for consistent but varied selection
     const hash = questionText.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
     answer = defaults[hash % defaults.length];
   }
@@ -267,13 +514,12 @@ function evaluateAnswer(questionText, answerText, type = 'Technical') {
 
   if (hasStructure) clarity += 20;
   if (sentenceCount >= 5) clarity += 15;
-  if (wordCount < 200) clarity += 10; // Not too verbose
+  if (wordCount < 200) clarity += 10;
 
   if (hasKeywords) relevance += 25;
   if (isDetailed) relevance += 15;
-  if (/I|my|me/i.test(answerText)) relevance += 10; // First person
+  if (/I|my|me/i.test(answerText)) relevance += 10;
 
-  // Cap at 95
   completeness = Math.min(95, completeness);
   clarity = Math.min(95, clarity);
   relevance = Math.min(95, relevance);

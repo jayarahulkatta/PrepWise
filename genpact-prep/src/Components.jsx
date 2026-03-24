@@ -81,7 +81,7 @@ const sideTitle = { fontSize:10,fontWeight:600,textTransform:"uppercase",letterS
 const filterSS = { background:"var(--card)",border:"1px solid var(--border)",color:"var(--text2)",padding:"7px 28px 7px 11px",borderRadius:8,fontSize:12,fontFamily:"var(--font)",cursor:"pointer",outline:"none",appearance:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 9px center" };
 
 // ─── QUESTION CARD ──────────────────────────────────────────────────────────
-function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, showToast }) {
+function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, showToast }) {
   const [answer, setAnswer] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [tone, setTone] = useState("confident");
@@ -154,6 +154,7 @@ function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, showToast }) {
         <button onClick={()=>generate()} disabled={generating} style={{ display:"flex",alignItems:"center",gap:7,padding:"7px 16px",borderRadius:8,background:"linear-gradient(135deg,#1b3564,#152a50)",border:"1px solid rgba(61,125,232,0.45)",color:"#6ea8fe",fontSize:12,fontWeight:600,fontFamily:"var(--font)",cursor:generating?"not-allowed":"pointer",opacity:generating?0.7:1 }}>
           {generating?<><Spinner/> Generating…</>:<>⚡ {answer?"Regenerate":"Generate Answer"}</>}
         </button>
+        {onDelete && <button onClick={()=>onDelete(q.id)} title="Delete Question" style={{ width:32,height:32,borderRadius:8,background:"var(--red-dim)",border:"1px solid var(--red)",color:"var(--red)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>🗑️</button>}
         <button onClick={()=>onBookmark(q.id)} title="Bookmark" style={{ width:32,height:32,borderRadius:8,background:bookmarked?"var(--red-dim)":"var(--surface)",border:`1px solid ${bookmarked?"var(--red)":"var(--border)"}`,color:bookmarked?"var(--red)":"var(--text2)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>🔖</button>
         <button onClick={()=>{navigator.clipboard.writeText(q.text);showToast("Question copied!")}} title="Copy" style={{ width:32,height:32,borderRadius:8,background:"var(--surface)",border:"1px solid var(--border)",color:"var(--text2)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>📋</button>
         <button onClick={()=>onLike(q.id)} style={{ display:"flex",alignItems:"center",gap:5,marginLeft:"auto",background:"none",border:"none",cursor:"pointer",color:liked?"var(--blue)":"var(--muted)",fontSize:12,fontFamily:"var(--font)",padding:"4px 8px",borderRadius:6 }}>

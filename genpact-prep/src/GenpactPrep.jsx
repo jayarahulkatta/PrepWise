@@ -291,6 +291,19 @@ export default function App() {
     } catch { showToast("Failed to vote"); }
   }, [user, getToken, showToast]);
 
+  const handleDelete = useCallback(async (id) => {
+    if (!user) return;
+    if (!window.confirm("Are you sure you want to delete this question?")) return;
+    try {
+      const token = await getToken();
+      await apiFetch(`${API_BASE}/questions/${id}`, { method:"DELETE" }, token);
+      setQuestions(prev => prev.filter(q => q.id !== id));
+      setAllQuestions(prev => prev.filter(q => q.id !== id));
+      setTotal(t => Math.max(0, t - 1));
+      showToast("Question deleted");
+    } catch { showToast("Failed to delete question"); }
+  }, [user, getToken, showToast]);
+
   const resetFilters = () => { setFilterJob("");setFilterType("");setFilterExp("");setFilterDiff("");setSearch("");setPage(1); };
 
   // Show auth page if not logged in
@@ -383,7 +396,7 @@ export default function App() {
         <div>
           {questions.length===0?<div style={{textAlign:"center",padding:64,color:"var(--muted)",fontSize:14}}>No questions match your filters.</div>:
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            {questions.map((q,i)=><div key={q.id} style={{animationDelay:`${i*40}ms`}} className="fadeUp"><QuestionCard q={q} bookmarked={bookmarks.has(q.id)} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} showToast={showToast}/></div>)}
+            {questions.map((q,i)=><div key={q.id} style={{animationDelay:`${i*40}ms`}} className="fadeUp"><QuestionCard q={q} bookmarked={bookmarks.has(q.id)} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} onDelete={handleDelete} showToast={showToast}/></div>)}
           </div>}
           {totalPages>1&&<div style={{display:"flex",gap:6,justifyContent:"center",marginTop:28,alignItems:"center"}}>
             {page>1&&<button onClick={()=>setPage(p=>p-1)} style={pageBtn(false)}>←</button>}

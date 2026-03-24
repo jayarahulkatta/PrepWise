@@ -215,6 +215,17 @@ app.post('/api/questions/submit', requireAuth, async (req, res) => {
   }
 });
 
+// Delete a question
+app.delete('/api/questions/:id', requireAuth, async (req, res) => {
+  try {
+    const question = await Question.findByIdAndDelete(req.params.id);
+    if (!question) return res.status(404).json({ error: 'Question not found' });
+    res.json({ message: 'Question deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete question' });
+  }
+});
+
 // Vote on a question
 app.post('/api/questions/:id/vote', requireAuth, async (req, res) => {
   try {

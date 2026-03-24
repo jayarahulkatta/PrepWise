@@ -1,0 +1,5 @@
+Sure, this is something I've dealt with hands-on in multiple projects.
+
+Spring Boot is an open-source Java framework used for programming standalone, production-grade Spring-based applications with a bundle of libraries that make project startup and management easier. Spring Boot is a convention-over-configuration extension for the Spring Java platform intended to help minimize configuration concerns while creating Spring-based applications.
+
+In my projects, I've applied this knowledge practically, and I believe having this strong conceptual foundation helps me write cleaner, more maintainable code.

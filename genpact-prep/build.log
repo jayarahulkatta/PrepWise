@@ -1,0 +1,16 @@
+
+> genpact-prep@0.1.0 build
+> react-scripts build
+
+(node:4512) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Creating an optimized production build...
+Failed to compile.
+
+[eslint] 
+src\GenpactPrep.jsx
+  Line 253:77:  'fetchTrigger' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+

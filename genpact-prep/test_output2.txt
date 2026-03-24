@@ -1,5 +1,0 @@
-Great question! Let me walk you through my understanding of this.
-
-The useEffect hook is one of the most commonly used hooks in ReactJS, used to handle side effects in functional components. Before hooks, these kinds of tasks were only possible in class components through lifecycle methods like componentDidMount, componentDidUpdate, and componentWillUnmount. Fetching data from an API.
-
-I find that truly understanding these fundamentals — not just memorizing them — is what sets apart a good developer, and I strive to maintain that depth of knowledge.

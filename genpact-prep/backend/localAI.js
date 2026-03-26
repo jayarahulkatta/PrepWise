@@ -104,7 +104,7 @@ If it is a behavioral question, structure your answer using the STAR (Situation,
     });
   } catch (error) {
     console.error('OpenAI Generate Error:', error);
-    return "I'm sorry, I'm currently unable to generate a response due to an AI service error. Please ensure the API key is valid or try again later.";
+    return `AI Service Error: ${error.message || 'Unknown error occurred. Please check Vercel logs.'}`;
   }
 }
 

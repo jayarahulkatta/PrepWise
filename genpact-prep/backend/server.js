@@ -431,7 +431,7 @@ app.post('/api/evaluate', async (req, res) => {
   await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 800));
 
   try {
-    const evaluation = evaluateAnswer(questionText, answerText);
+    const evaluation = await evaluateAnswer(questionText, answerText);
     res.json({ content: JSON.stringify(evaluation) });
   } catch (error) {
     console.error('Local AI Evaluate Error:', error);

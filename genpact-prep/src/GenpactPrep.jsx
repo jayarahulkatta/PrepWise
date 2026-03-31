@@ -52,9 +52,9 @@ function MockInterview({ onClose, allQuestions, company }) {
   const tc = timeLeft<=30?"var(--red)":timeLeft<=60?"var(--yellow)":"var(--text)";
   const q=questions[idx];
 
-  const modalOverlay = {position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20};
-  const modalCard = {background:"var(--surface)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:24,width:"100%",maxWidth:700,maxHeight:"90vh",overflowY:"auto",padding:36,position:"relative",boxShadow:"0 24px 80px rgba(0,0,0,0.6)",animation:"fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both"};
-  const closeBtn = {position:"absolute",top:18,right:18,width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s"};
+  const modalOverlay = {position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20};
+  const modalCard = {background:"var(--glass)",border:"1px solid var(--glass-border)",borderRadius:24,width:"100%",maxWidth:700,maxHeight:"90vh",overflowY:"auto",padding:36,position:"relative",boxShadow:"var(--shadow), 0 0 0 1px rgba(255,255,255,0.03) inset",animation:"fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both"};
+  const closeBtn = {position:"absolute",top:18,right:18,width:34,height:34,borderRadius:10,background:"var(--surface)",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)"};
 
   return (
     <div style={modalOverlay} onClick={e=>e.target===e.currentTarget&&onClose()}>
@@ -79,7 +79,7 @@ function MockInterview({ onClose, allQuestions, company }) {
           <div style={{fontSize:52,fontWeight:800,fontFamily:"var(--mono)",textAlign:"center",color:tc,marginBottom:20,letterSpacing:"-2px",textShadow:timeLeft<=30?"0 0 20px var(--red)":"none",transition:"all 0.3s"}}>{m}:{String(s).padStart(2,"0")}</div>
           <div style={{display:"flex",gap:6,marginBottom:14}}><Badge label={q.type} cls={`tag-${q.type}`}/><Badge label={q.diff} cls={`diff-${q.diff}`}/></div>
           <p style={{fontSize:16,fontWeight:500,lineHeight:1.7,marginBottom:20,letterSpacing:"-0.2px"}}>{q.text}</p>
-          <textarea value={userAnswer} onChange={e=>setUserAnswer(e.target.value)} placeholder="Type your answer…" style={{width:"100%",background:"rgba(255,255,255,0.03)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:14,padding:16,fontSize:13,fontFamily:"var(--font)",resize:"vertical",minHeight:140,outline:"none",lineHeight:1.8,transition:"border-color 0.2s"}}/>
+          <textarea value={userAnswer} onChange={e=>setUserAnswer(e.target.value)} placeholder="Type your answer…" style={{width:"100%",background:"var(--card-highest)",border:"1px solid transparent",color:"var(--text)",borderRadius:14,padding:16,fontSize:13,fontFamily:"var(--font)",resize:"vertical",minHeight:140,outline:"none",lineHeight:1.8,transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)"}}/>
           {!feedback&&!loadingFeedback&&<div style={{display:"flex",gap:10,marginTop:16}}><button className="btn-glow" onClick={submitAnswer} style={{...primaryBtn,flex:1}}>Submit & Get Feedback</button><button className="btn-secondary-hover" onClick={next} style={{...secondaryBtn,flex:1}}>Skip →</button></div>}
           {loadingFeedback&&<div style={{marginTop:18,textAlign:"center",color:"var(--text2)",fontSize:13,padding:12}}><TypingDots/> <span style={{marginLeft:8}}>Analyzing your answer…</span></div>}
           {feedback&&<div className="fadeUp" style={{marginTop:20,padding:20,background:"rgba(255,255,255,0.02)",border:"1px solid var(--border)",borderRadius:16}}>
@@ -120,12 +120,12 @@ function ChatSimulator({ onClose, company }) {
   };
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:"var(--surface)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:24,width:"100%",maxWidth:600,height:"80vh",maxHeight:680,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",boxShadow:"0 24px 80px rgba(0,0,0,0.6)",animation:"fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both"}}>
-        <div style={{padding:"18px 22px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:14,flexShrink:0,background:"rgba(255,255,255,0.02)"}}>
-          <div style={{width:42,height:42,borderRadius:14,background:"linear-gradient(135deg,var(--blue),var(--green))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:"0 4px 16px rgba(59,130,246,0.25)"}}>🤵</div>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"var(--glass)",border:"1px solid var(--glass-border)",borderRadius:24,width:"100%",maxWidth:600,height:"80vh",maxHeight:680,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",boxShadow:"var(--shadow), 0 0 0 1px rgba(255,255,255,0.03) inset",animation:"fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both"}}>
+        <div style={{padding:"18px 22px",borderBottom:"1px solid transparent",display:"flex",alignItems:"center",gap:14,flexShrink:0,background:"var(--card-highest)"}}>
+          <div style={{width:42,height:42,borderRadius:14,background:"linear-gradient(135deg,var(--blue-bright),var(--blue))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:"0 4px 16px rgba(37,99,235,0.25)"}}>🤵</div>
           <div><div style={{fontSize:14,fontWeight:600,letterSpacing:"-0.3px"}}>{company||"Company"} Interviewer</div><div style={{fontSize:11,color:"var(--green)",fontWeight:500,display:"flex",alignItems:"center",gap:4}}><span style={{width:6,height:6,borderRadius:"50%",background:"var(--green)",display:"inline-block",animation:"pulse 2s infinite"}}/>Live — AI Simulator</div></div>
-          <button onClick={onClose} style={{marginLeft:"auto",width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.color="var(--red)";e.currentTarget.style.borderColor="var(--red)"}} onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";e.currentTarget.style.borderColor="var(--border)"}}>×</button>
+          <button onClick={onClose} style={{marginLeft:"auto",width:34,height:34,borderRadius:10,background:"var(--surface)",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)"}} onMouseEnter={e=>{e.currentTarget.style.color="var(--red)";e.currentTarget.style.borderColor="var(--red)"}} onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";e.currentTarget.style.borderColor="var(--border)"}}>×</button>
         </div>
         <div style={{flex:1,overflowY:"auto",padding:22,display:"flex",flexDirection:"column",gap:14}}>
           {messages.map((m,i)=><div key={i} style={{display:"flex",gap:10,flexDirection:m.role==="user"?"row-reverse":"row",animation:`fadeUp 0.3s cubic-bezier(0.16,1,0.3,1) both`}}>
@@ -135,9 +135,9 @@ function ChatSimulator({ onClose, company }) {
           {loading&&<div style={{display:"flex",gap:10,animation:"fadeUp 0.3s ease both"}}><div style={{width:32,height:32,borderRadius:10,background:"var(--card)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🤵</div><div style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,borderBottomLeftRadius:4,padding:"14px 18px"}}><TypingDots/></div></div>}
           <div ref={bottomRef}/>
         </div>
-        <div style={{padding:16,borderTop:"1px solid var(--border)",display:"flex",gap:10,flexShrink:0,background:"rgba(255,255,255,0.02)"}}>
-          <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}}} placeholder="Type your answer… (Enter to send)" style={{flex:1,background:"rgba(255,255,255,0.03)",border:"1px solid var(--border)",color:"var(--text)",padding:"10px 14px",borderRadius:12,fontSize:13,fontFamily:"var(--font)",resize:"none",height:44,outline:"none",lineHeight:1.6,transition:"border-color 0.2s"}}/>
-          <button className="btn-glow" onClick={send} disabled={loading||!input.trim()} style={{width:44,height:44,borderRadius:12,background:"linear-gradient(135deg,var(--blue),#2563eb)",border:"none",color:"#fff",cursor:loading||!input.trim()?"not-allowed":"pointer",opacity:loading||!input.trim()?0.5:1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 2px 12px rgba(59,130,246,0.3)"}}>➤</button>
+        <div style={{padding:16,borderTop:"1px solid transparent",display:"flex",gap:10,flexShrink:0,background:"var(--card-highest)"}}>
+          <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}}} placeholder="Type your answer… (Enter to send)" style={{flex:1,background:"var(--card-highest)",border:"1px solid transparent",color:"var(--text)",padding:"10px 14px",borderRadius:12,fontSize:13,fontFamily:"var(--font)",resize:"none",height:44,outline:"none",lineHeight:1.6,transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)"}}/>
+          <button className="btn-glow" onClick={send} disabled={loading||!input.trim()} style={{width:44,height:44,borderRadius:12,background:"linear-gradient(135deg,var(--blue),#2563eb)",border:"none",color:"#fff",cursor:loading||!input.trim()?"not-allowed":"pointer",opacity:loading||!input.trim()?0.5:1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 4px 16px rgba(37, 99, 235, 0.3)"}}>➤</button>
         </div>
       </div>
     </div>
@@ -161,12 +161,12 @@ function SubmitQuestionModal({ onClose, companies, selectedCompany, getToken, sh
     setSubmitting(false);
   };
 
-  const inputSt = { width:"100%",padding:"11px 14px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid var(--border)",color:"var(--text)",fontSize:13,fontFamily:"var(--font)",outline:"none",transition:"border-color 0.2s" };
+  const inputSt = { width:"100%",padding:"11px 14px",borderRadius:12,background:"var(--card-highest)",border:"1px solid transparent",color:"var(--text)",fontSize:13,fontFamily:"var(--font)",outline:"none",transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)" };
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:"var(--surface)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:24,width:"100%",maxWidth:540,padding:36,position:"relative",boxShadow:"0 24px 80px rgba(0,0,0,0.6)",animation:"fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both"}}>
-        <button onClick={onClose} style={{position:"absolute",top:18,right:18,width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.color="var(--red)";e.currentTarget.style.borderColor="var(--red)"}} onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";e.currentTarget.style.borderColor="var(--border)"}}>×</button>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"var(--glass)",border:"1px solid var(--glass-border)",borderRadius:24,width:"100%",maxWidth:540,padding:36,position:"relative",boxShadow:"var(--shadow), 0 0 0 1px rgba(255,255,255,0.03) inset",animation:"fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both"}}>
+        <button onClick={onClose} style={{position:"absolute",top:18,right:18,width:34,height:34,borderRadius:10,background:"var(--surface)",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)"}} onMouseEnter={e=>{e.currentTarget.style.color="var(--red)";e.currentTarget.style.borderColor="var(--red)"}} onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";e.currentTarget.style.borderColor="var(--border)"}}>×</button>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
           <span style={{fontSize:28}}>📝</span>
           <div><h2 style={{fontSize:20,fontWeight:700,letterSpacing:"-0.5px"}}>Submit a Question</h2>
@@ -191,10 +191,10 @@ function SubmitQuestionModal({ onClose, companies, selectedCompany, getToken, sh
 // ─── BOOKMARKS PANEL ────────────────────────────────────────────────────────
 function BookmarksPanel({ bookmarkedQuestions, onClose, onRemove }) {
   return (
-    <div className="slideInRight" style={{position:"fixed",top:0,right:0,bottom:0,width:360,zIndex:800,background:"var(--surface)",borderLeft:"1px solid rgba(255,255,255,0.06)",display:"flex",flexDirection:"column",boxShadow:"-16px 0 64px rgba(0,0,0,0.5)",backdropFilter:"blur(16px)"}}>
-      <div style={{padding:22,borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+    <div className="slideInRight" style={{position:"fixed",top:0,right:0,bottom:0,width:360,zIndex:800,background:"var(--glass)",borderLeft:"1px solid var(--glass-border)",display:"flex",flexDirection:"column",boxShadow:"var(--shadow), 0 0 0 1px rgba(255,255,255,0.03) inset",backdropFilter:"blur(24px) saturate(1.2)"}}>
+      <div style={{padding:22,borderBottom:"1px solid transparent",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"var(--card-highest)"}}>
         <h2 style={{fontSize:16,fontWeight:700,letterSpacing:"-0.3px"}}>🔖 Saved <span style={{fontSize:12,color:"var(--muted)",fontFamily:"var(--mono)",fontWeight:500}}>({bookmarkedQuestions.length})</span></h2>
-        <button onClick={onClose} style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.color="var(--red)";e.currentTarget.style.borderColor="var(--red)"}} onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";e.currentTarget.style.borderColor="var(--border)"}}>×</button>
+        <button onClick={onClose} style={{width:34,height:34,borderRadius:10,background:"var(--surface)",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)"}} onMouseEnter={e=>{e.currentTarget.style.color="var(--red)";e.currentTarget.style.borderColor="var(--red)"}} onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";e.currentTarget.style.borderColor="var(--border)"}}>×</button>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:12}}>
         {bookmarkedQuestions.length===0?<div style={{textAlign:"center",color:"var(--muted)",fontSize:13,padding:"52px 20px",lineHeight:1.8}}>No bookmarks yet.<br/>Click 🔖 on any question.</div>:
@@ -349,62 +349,62 @@ export default function App() {
 
   const pageBtn = active => ({
     width:36, height:36, borderRadius:10,
-    background: active ? "linear-gradient(135deg,var(--blue),#2563eb)" : "var(--card)",
-    border: `1px solid ${active ? "transparent" : "var(--border)"}`,
-    color: active ? "#fff" : "var(--text2)", fontSize:12, fontWeight:active?600:400,
+    background: active ? "linear-gradient(135deg,var(--blue-bright),var(--blue))" : "var(--card-highest)",
+    border: "1px solid transparent",
+    color: active ? "#08090d" : "var(--text)", fontSize:13, fontWeight:active?700:500,
     cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-    fontFamily:"var(--font)", transition:"all 0.2s",
-    boxShadow: active ? "0 2px 12px rgba(59,130,246,0.25)" : "none",
+    fontFamily:"var(--font)", transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)",
+    boxShadow: active ? "0 4px 16px rgba(37,99,235,0.3)" : "none",
   });
 
   const headerBtn = (active) => ({
     ...secondaryBtn, flex:"none", padding:"8px 16px", fontSize:12, fontWeight:500,
     display:"flex", alignItems:"center", gap:6, borderRadius:10,
-    borderColor: active ? "var(--blue)" : "var(--border)",
-    color: active ? "var(--blue)" : "var(--text2)",
-    background: active ? "var(--blue-dim)" : "var(--card)",
-    transition:"all 0.2s",
+    borderColor: "transparent",
+    color: active ? "var(--blue-bright)" : "var(--text2)",
+    background: active ? "var(--card-highest)" : "var(--card)",
+    transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)",
   });
 
   return (
     <>
       <style>{css}</style>
       {/* ─── HEADER ─── */}
-      <header className="glass" style={{position:"sticky",top:0,zIndex:500,borderBottom:"1px solid var(--border)",padding:"0 28px",display:"flex",alignItems:"center",gap:14,height:62}}>
+      <header className="glass" style={{position:"sticky",top:0,zIndex:500,borderBottom:"1px solid var(--glass-border)",padding:"0 28px",display:"flex",alignItems:"center",gap:14,height:62,background:"var(--glass)",backdropFilter:"blur(24px) saturate(1.2)",WebkitBackdropFilter:"blur(24px) saturate(1.2)"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{width:30,height:30,display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,transform:"rotate(45deg)",filter:"drop-shadow(0 0 12px rgba(239,68,68,0.2))"}}>
-            {["#ef4444","#3b82f6","#3b82f6","#ef4444"].map((c,i)=><span key={i} style={{borderRadius:4,background:c}}/>)}
+            {["#ef4444","#2563eb","#2563eb","#ef4444"].map((c,i)=><span key={i} style={{borderRadius:4,background:c}}/>)}
           </div>
           <span style={{fontSize:17,fontWeight:700,letterSpacing:"-0.5px"}}>Prep<span style={{color:"var(--red)"}}>Wise</span></span>
         </div>
-        <span style={{marginLeft:16,fontSize:12,color:"var(--text2)",background:"rgba(255,255,255,0.04)",padding:"6px 14px",borderRadius:10,border:"1px solid var(--border)",fontWeight:500}}>🏢 Genpact</span>
+        <span style={{marginLeft:16,fontSize:12,color:"var(--text2)",background:"var(--surface)",padding:"6px 14px",borderRadius:10,border:"1px solid transparent",fontWeight:500}}>🏢 Genpact</span>
         <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
           <button className="btn-secondary-hover" onClick={()=>setShowSubmit(true)} style={headerBtn(false)}>📝 Submit Q</button>
           <button className="btn-secondary-hover" onClick={()=>setShowChat(true)} style={headerBtn(false)}>💬 AI Chat</button>
           <button className="btn-secondary-hover" onClick={()=>setShowMock(true)} style={headerBtn(false)}>⏱️ Mock</button>
           <button className="btn-secondary-hover" onClick={()=>setShowBookmarks(v=>!v)} style={headerBtn(showBookmarks)}>🔖 {bookmarks.size}</button>
           <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:8}}>
-            <div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,var(--blue),var(--purple))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,overflow:"hidden",border:"2px solid var(--border)",boxShadow:"0 2px 12px rgba(59,130,246,0.2)"}}>
+            <div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,var(--blue-bright),var(--blue))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,overflow:"hidden",border:"2px solid transparent",boxShadow:"0 2px 12px rgba(37,99,235,0.2)"}}>
               {user.photoURL?<img src={user.photoURL} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:user.displayName?user.displayName[0].toUpperCase():"U"}
             </div>
-            <button onClick={signOut} style={{background:"none",border:"1px solid rgba(239,68,68,0.2)",color:"var(--red)",padding:"5px 12px",borderRadius:8,fontSize:11,cursor:"pointer",fontFamily:"var(--font)",fontWeight:500,transition:"all 0.2s"}} onMouseEnter={e=>{e.currentTarget.style.background="var(--red-dim)"}} onMouseLeave={e=>{e.currentTarget.style.background="none"}}>Sign Out</button>
+            <button onClick={signOut} style={{background:"none",border:"1px solid transparent",color:"var(--red)",padding:"5px 12px",borderRadius:8,fontSize:11,cursor:"pointer",fontFamily:"var(--font)",fontWeight:500,transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)"}} onMouseEnter={e=>{e.currentTarget.style.background="var(--red-dim)"}} onMouseLeave={e=>{e.currentTarget.style.background="none"}}>Sign Out</button>
           </div>
         </div>
       </header>
 
       {/* ─── DAILY BANNER ─── */}
-      {dailyQ&&<div style={{background:"linear-gradient(135deg,rgba(59,130,246,0.06),rgba(16,185,129,0.04))",borderBottom:"1px solid rgba(59,130,246,0.1)",padding:"12px 28px",display:"flex",alignItems:"center",gap:12}}>
-        <span style={{background:"linear-gradient(135deg,var(--blue),var(--green))",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20,textTransform:"uppercase",letterSpacing:1.2,fontFamily:"var(--mono)",flexShrink:0,boxShadow:"0 2px 8px rgba(59,130,246,0.25)"}}>Today's Q</span>
+      {dailyQ&&<div style={{background:"linear-gradient(135deg,var(--card),var(--card-highest))",borderBottom:"1px solid var(--glass-border)",padding:"12px 28px",display:"flex",alignItems:"center",gap:12}}>
+        <span style={{background:"linear-gradient(135deg,var(--blue-bright),var(--blue))",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20,textTransform:"uppercase",letterSpacing:1.2,fontFamily:"var(--mono)",flexShrink:0,boxShadow:"0 2px 8px rgba(37,99,235,0.25)"}}>Today's Q</span>
         <span style={{fontSize:13,color:"var(--text2)"}}><strong style={{color:"var(--text)",fontWeight:500}}>{dailyQ.text}</strong></span>
       </div>}
 
       {/* ─── HERO ─── */}
       <div style={{padding:"40px 28px 28px",maxWidth:1240,margin:"0 auto",position:"relative"}}>
         {/* Subtle ambient glow behind hero */}
-        <div style={{position:"absolute",top:-40,left:-60,width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.04),transparent 70%)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",top:-40,left:-60,width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(37,99,235,0.08),transparent 70%)",pointerEvents:"none"}}/>
         <div style={{display:"flex",alignItems:"center",gap:18,marginBottom:18,position:"relative"}}>
           <div style={{width:56,height:56,background:"#fff",borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 24px rgba(239,68,68,0.15), 0 0 0 1px rgba(255,255,255,0.1)"}}>
-            <svg viewBox="0 0 100 100" width="40" height="40" fill="none"><path d="M20 20 L50 5 L80 20 L80 80 L50 95 L20 80 Z" fill="#ef4444" opacity="0.9"/><path d="M50 5 L80 20 L80 80 L50 65 Z" fill="#dc2626"/><path d="M20 20 L50 35 L50 65 L20 80 Z" fill="#3b82f6" opacity="0.9"/><rect x="38" y="48" width="26" height="4" fill="white" rx="2"/><rect x="38" y="42" width="15" height="4" fill="white" rx="2"/></svg>
+            <svg viewBox="0 0 100 100" width="40" height="40" fill="none"><path d="M20 20 L50 5 L80 20 L80 80 L50 95 L20 80 Z" fill="#ef4444" opacity="0.9"/><path d="M50 5 L80 20 L80 80 L50 65 Z" fill="#dc2626"/><path d="M20 20 L50 35 L50 65 L20 80 Z" fill="#2563eb" opacity="0.9"/><rect x="38" y="48" width="26" height="4" fill="white" rx="2"/><rect x="38" y="42" width="15" height="4" fill="white" rx="2"/></svg>
           </div>
           <div>
             <h1 style={{fontSize:22,fontWeight:700,letterSpacing:"-0.5px"}}>{selectedCompany}</h1>
@@ -429,7 +429,7 @@ export default function App() {
           <svg style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",color:"var(--muted)"}} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="Search…" style={{...filterSS,paddingLeft:32,width:220,backgroundImage:"none"}}/>
         </div>
-        {(filterJob||filterType||filterExp||filterDiff||search)&&<button onClick={resetFilters} style={{background:"var(--red-dim)",border:"1px solid rgba(239,68,68,0.2)",color:"var(--red)",padding:"6px 14px",borderRadius:10,fontSize:12,cursor:"pointer",fontFamily:"var(--font)",fontWeight:500,transition:"all 0.2s"}}>✕ Clear</button>}
+        {(filterJob||filterType||filterExp||filterDiff||search)&&<button onClick={resetFilters} style={{background:"var(--red-dim)",border:"1px solid transparent",color:"var(--red)",padding:"6px 14px",borderRadius:10,fontSize:12,cursor:"pointer",fontFamily:"var(--font)",fontWeight:500,transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)"}}>✕ Clear</button>}
       </div>
 
       {/* ─── RESULTS BAR ─── */}

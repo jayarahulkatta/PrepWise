@@ -5,22 +5,18 @@ const css = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
-  --bg: #08090d; --surface: #0e1015; --card: #141720; --card-hover: #1a1e2e;
-  --border: #1e2235; --border-hover: #2a3050;
+  --bg: #08090d; --surface: #121317; --card: #1e1f24; --card-hover: #292a2e;
+  --border: rgba(67, 70, 85, 0.2); --border-hover: rgba(67, 70, 85, 0.4);
   --red: #ef4444; --red-dim: rgba(239,68,68,0.1);
-  --blue: #3b82f6; --blue-dim: rgba(59,130,246,0.1);
+  --blue: #2563eb; --blue-dim: rgba(37,99,235,0.1);
   --green: #10b981; --green-dim: rgba(16,185,129,0.08);
-  --yellow: #f59e0b; --purple: #8b5cf6;
-  --text: #f1f5f9; --text2: #94a3b8; --muted: #4b5563;
+  --text: #e3e2e8; --text2: #c3c6d7; --muted: #8d90a0;
   --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
 }
 body { font-family:var(--font); background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
-@keyframes fadeUp { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(30px) } to { opacity:1; transform:translateY(0) } }
 @keyframes float { 0%,100% { transform: translate(0,0) scale(1) } 33% { transform: translate(30px,-20px) scale(1.05) } 66% { transform: translate(-20px, 15px) scale(0.95) } }
 @keyframes float2 { 0%,100% { transform: translate(0,0) scale(1) } 33% { transform: translate(-25px,20px) scale(1.08) } 66% { transform: translate(15px, -25px) scale(0.92) } }
-@keyframes pulse-ring { 0% { transform: scale(0.8); opacity:0.5 } 50% { transform:scale(1); opacity:0.2 } 100% { transform:scale(0.8); opacity:0.5 } }
-@keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
-@keyframes rotate-slow { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 `;
 
 export default function AuthPage() {
@@ -110,14 +106,14 @@ export default function AuthPage() {
 
           {/* Card with glassmorphism */}
           <div style={{
-            background:"rgba(14,16,21,0.85)", border:"1px solid rgba(255,255,255,0.06)",
+            background:"var(--glass)", border:"1px solid var(--glass-border)",
             borderRadius:24, padding:36,
-            boxShadow:"0 16px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset",
-            backdropFilter:"blur(20px) saturate(1.3)",
-            WebkitBackdropFilter:"blur(20px) saturate(1.3)",
+            boxShadow:"var(--shadow), 0 0 0 1px rgba(255,255,255,0.03) inset",
+            backdropFilter:"blur(24px) saturate(1.3)",
+            WebkitBackdropFilter:"blur(24px) saturate(1.3)",
           }}>
             {/* Tabs */}
-            <div style={{ display:"flex", marginBottom:32, background:"rgba(255,255,255,0.03)", borderRadius:14, padding:4, border:"1px solid var(--border)" }}>
+            <div style={{ display:"flex", marginBottom:32, background:"var(--surface)", borderRadius:14, padding:4 }}>
               {["login", "signup"].map(m => (
                 <button key={m} onClick={() => { setMode(m); setError(""); }} style={{
                   flex:1, padding:"11px 0", borderRadius:11, border:"none", cursor:"pointer",
@@ -134,12 +130,12 @@ export default function AuthPage() {
             {/* Google button */}
             <button onClick={handleGoogle} disabled={loading} style={{
               width:"100%", padding:"13px 0", borderRadius:14, cursor: loading ? "not-allowed" : "pointer",
-              background:"rgba(255,255,255,0.04)", border:"1px solid var(--border)", color:"var(--text)",
+              background:"var(--surface)", border:"1px solid var(--border)", color:"var(--text)",
               fontSize:13, fontWeight:600, fontFamily:"var(--font)", display:"flex", alignItems:"center",
-              justifyContent:"center", gap:10, marginBottom:24, transition:"all 0.25s",
+              justifyContent:"center", gap:10, marginBottom:24, transition:"all 0.4s cubic-bezier(0.16,1,0.3,1)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)"; e.currentTarget.style.background = "rgba(59,130,246,0.05)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--card-hover)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -228,8 +224,8 @@ export default function AuthPage() {
 
 const inputStyle = {
   width:"100%", padding:"12px 16px", borderRadius:12, outline:"none",
-  background:"rgba(255,255,255,0.03)", border:"1px solid var(--border)",
-  color:"var(--text)", fontSize:13, fontFamily:"'Inter', sans-serif",
-  transition:"all 0.25s",
+  background:"var(--card-highest)", border:"1px solid transparent",
+  color:"var(--text)", fontSize:13, fontFamily:"var(--font)",
+  transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)",
   letterSpacing:"-0.1px",
 };

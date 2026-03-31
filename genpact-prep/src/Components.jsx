@@ -27,31 +27,33 @@ const css = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
-  --bg: #08090d;
-  --surface: #0e1015;
-  --card: #141720;
-  --card-hover: #1a1e2e;
-  --border: #1e2235;
-  --border-hover: #2a3050;
-  --red: #ef4444;
+  /* Aura Obsidian Design Tokens */
+  --bg: #08090d; /* Deep base */
+  --surface: #121317; /* Main canvas / surface */
+  --card: #1e1f24; /* Active layer (surface-container) */
+  --card-hover: #292a2e; /* surface-container-high */
+  --card-highest: #343439; /* surface-container-highest */
+  --border: rgba(67, 70, 85, 0.2); /* outline_variant ghost border */
+  --border-hover: rgba(67, 70, 85, 0.4);
+  --red: #ef4444; /* Human passion accent */
   --red-dim: rgba(239,68,68,0.1);
-  --blue: #3b82f6;
-  --blue-dim: rgba(59,130,246,0.1);
+  --blue: #2563eb; /* primary_container / AI logic */
+  --blue-bright: #b4c5ff; /* primary */
+  --blue-dim: rgba(37,99,235,0.1);
   --green: #10b981;
   --green-dim: rgba(16,185,129,0.08);
   --yellow: #f59e0b;
-  --purple: #8b5cf6;
-  --cyan: #06b6d4;
-  --text: #f1f5f9;
-  --text2: #94a3b8;
-  --muted: #4b5563;
+  --purple: #6366f1; /* Tertiary indigo */
+  --text: #e3e2e8; /* on_surface */
+  --text2: #c3c6d7; /* on_surface_variant */
+  --muted: #8d90a0; /* outline */
   --font: 'Inter', -apple-system, sans-serif;
   --mono: 'JetBrains Mono', monospace;
-  --shadow: 0 8px 32px rgba(0,0,0,0.6);
-  --shadow-glow: 0 0 60px rgba(59,130,246,0.08);
+  --shadow: 0 16px 40px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 40px rgba(180, 197, 255, 0.08); /* Ambient glow */
   --radius: 16px;
-  --glass: rgba(14,16,21,0.8);
-  --glass-border: rgba(255,255,255,0.06);
+  --glass: rgba(52, 52, 57, 0.4); /* surface-container-highest at 40% */
+  --glass-border: rgba(67, 70, 85, 0.15);
 }
 html { scroll-behavior: smooth; }
 body {
@@ -61,6 +63,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Background pulse & dots textures */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -2;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(37,99,235,0.08) 0%, transparent 400px),
+    radial-gradient(circle at 90% 80%, rgba(239,68,68,0.06) 0%, transparent 400px);
+  animation: pulseBg 15s ease-in-out infinite alternate; pointer-events: none;
+}
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: -1;
+  background-image: radial-gradient(rgba(141,144,160,0.05) 1px, transparent 1px);
+  background-size: 16px 16px; pointer-events: none;
+}
+@keyframes pulseBg { 0% { opacity: 0.8; } 100% { opacity: 1.2; transform: scale(1.05); } }
+
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -145,43 +163,52 @@ body {
 .diff-Medium { background: rgba(245,158,11,0.08); color: #fbbf24; border: 1px solid rgba(245,158,11,0.15); }
 .diff-Hard { background: rgba(239,68,68,0.08); color: #f87171; border: 1px solid rgba(239,68,68,0.15); }
 
+/* ─── TAG BADGES ──────────────────────────────────────────────────────── */
+.tag-Technical { background: rgba(37,99,235,0.12); color: var(--blue-bright); border: none; }
+.tag-HR { background: var(--red-dim); color: var(--red); border: none; }
+.tag-Background { background: rgba(99,102,241,0.1); color: #818cf8; border: none; }
+.tag-Behavioral { background: rgba(245,158,11,0.1); color: #fbbf24; border: none; }
+.diff-Easy { background: var(--green-dim); color: var(--green); border: none; }
+.diff-Medium { background: rgba(245,158,11,0.08); color: #fbbf24; border: none; }
+.diff-Hard { background: var(--red-dim); color: var(--red); border: none; }
+
 /* ─── INTERACTIVE ELEMENTS ────────────────────────────────────────────── */
 .card-hover {
-  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
-  will-change: transform, box-shadow;
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+  will-change: transform, box-shadow, background;
 }
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(59,130,246,0.1);
+  background: var(--card-hover) !important;
+  box-shadow: var(--shadow);
   border-color: var(--border-hover) !important;
 }
 .btn-glow {
   position: relative;
   overflow: hidden;
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
 }
 .btn-glow:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
 }
 .btn-glow:active {
   transform: translateY(0);
 }
 .btn-secondary-hover {
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
 }
 .btn-secondary-hover:hover {
-  border-color: var(--blue) !important;
-  background: rgba(59,130,246,0.05) !important;
+  border-color: var(--muted) !important;
+  background: rgba(255,255,255,0.05) !important;
   color: var(--text) !important;
 }
 .sidebar-btn {
-  transition: all 0.2s ease !important;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1) !important;
 }
 .sidebar-btn:hover {
-  border-color: var(--blue) !important;
-  background: rgba(59,130,246,0.06) !important;
-  transform: translateX(3px);
+  background: var(--card-highest) !important;
+  transform: translateX(4px);
 }
 
 /* Skeleton loading */
@@ -277,15 +304,16 @@ const secondaryBtn = {
   transition:"all 0.2s ease",
 };
 const selectSt = {
-  background:"var(--card)", border:"1px solid var(--border)",
+  background:"var(--card-highest)", border:"1px solid transparent",
   color:"var(--text)", padding:"9px 14px", borderRadius:10,
   fontSize:13, fontFamily:"var(--font)", width:"100%",
-  outline:"none", cursor:"pointer", transition:"border-color 0.2s",
+  outline:"none", cursor:"pointer", transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)",
 };
 const sideCard = {
-  background:"var(--card)", border:"1px solid var(--border)",
+  background:"var(--card)", border:"1px solid transparent",
   borderRadius:16, padding:20,
-  transition:"all 0.3s ease",
+  boxShadow:"var(--shadow)",
+  transition:"all 0.4s cubic-bezier(0.16,1,0.3,1)",
 };
 const sideTitle = {
   fontSize:10, fontWeight:600, textTransform:"uppercase",
@@ -293,12 +321,12 @@ const sideTitle = {
   fontFamily:"var(--mono)",
 };
 const filterSS = {
-  background:"var(--card)", border:"1px solid var(--border)",
-  color:"var(--text2)", padding:"7px 30px 7px 11px", borderRadius:10,
-  fontSize:12, fontFamily:"var(--font)", cursor:"pointer",
-  outline:"none", appearance:"none", transition:"border-color 0.2s",
+  background:"var(--card-highest)", border:"1px solid transparent",
+  color:"var(--text)", padding:"9px 30px 9px 14px", borderRadius:12,
+  fontSize:13, fontFamily:"var(--font)", cursor:"pointer",
+  outline:"none", appearance:"none", transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)",
   backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-  backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center",
+  backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center",
 };
 
 // ─── QUESTION CARD (PREMIUM) ────────────────────────────────────────────────

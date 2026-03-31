@@ -22,65 +22,286 @@ async function callAI(messages, endpoint = "generate") {
   return data.content;
 }
 
-// ─── CSS ────────────────────────────────────────────────────────────────────
+// ─── PREMIUM CSS DESIGN SYSTEM ──────────────────────────────────────────────
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
-  --bg:#0b0d13;--surface:#111318;--card:#161921;--card-hover:#1c1f2a;
-  --border:#222632;--border-hover:#2e3447;
-  --red:#e84b3a;--red-dim:rgba(232,75,58,0.12);
-  --blue:#3d7de8;--blue-dim:rgba(61,125,232,0.12);
-  --green:#00c896;--green-dim:rgba(0,200,150,0.1);
-  --yellow:#f5a623;--purple:#a855f7;
-  --text:#eaedf5;--text2:#9aa3b8;--muted:#555f78;
-  --font:'Sora',sans-serif;--mono:'IBM Plex Mono',monospace;
-  --shadow:0 4px 24px rgba(0,0,0,0.5);--radius:12px;
+  --bg: #08090d;
+  --surface: #0e1015;
+  --card: #141720;
+  --card-hover: #1a1e2e;
+  --border: #1e2235;
+  --border-hover: #2a3050;
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.1);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.1);
+  --green: #10b981;
+  --green-dim: rgba(16,185,129,0.08);
+  --yellow: #f59e0b;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --muted: #4b5563;
+  --font: 'Inter', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 60px rgba(59,130,246,0.08);
+  --radius: 16px;
+  --glass: rgba(14,16,21,0.8);
+  --glass-border: rgba(255,255,255,0.06);
 }
-body{font-family:var(--font);background:var(--bg);color:var(--text)}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes blink{50%{opacity:0}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-@keyframes dot1{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
-.fadeUp{animation:fadeUp .35s ease both}
-.fadeIn{animation:fadeIn .25s ease both}
-.spin{animation:spin .8s linear infinite;display:inline-block}
-.tag-Technical{background:rgba(61,125,232,0.14);color:#6ea8fe;border:1px solid rgba(61,125,232,0.25)}
-.tag-HR{background:rgba(232,75,58,0.12);color:#f87171;border:1px solid rgba(232,75,58,0.25)}
-.tag-Background{background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.25)}
-.tag-Behavioral{background:rgba(245,166,35,0.12);color:#fbbf24;border:1px solid rgba(245,166,35,0.25)}
-.diff-Easy{background:rgba(0,200,150,0.1);color:#34d399;border:1px solid rgba(0,200,150,0.2)}
-.diff-Medium{background:rgba(245,166,35,0.1);color:#fbbf24;border:1px solid rgba(245,166,35,0.2)}
-.diff-Hard{background:rgba(232,75,58,0.1);color:#f87171;border:1px solid rgba(232,75,58,0.2)}
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ─── KEYFRAME ANIMATIONS ─────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes float {
+  0%,100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 20px rgba(59,130,246,0.1); }
+  50% { box-shadow: 0 0 40px rgba(59,130,246,0.2); }
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+@keyframes borderGlow {
+  0%,100% { border-color: var(--border); }
+  50% { border-color: var(--blue); }
+}
+@keyframes skeletonPulse {
+  0% { opacity: 0.05; }
+  50% { opacity: 0.1; }
+  100% { opacity: 0.05; }
+}
+
+/* ─── ANIMATION UTILITIES ─────────────────────────────────────────────── */
+.fadeUp { animation: fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+.fadeIn { animation: fadeIn 0.3s ease both; }
+.slideInRight { animation: slideInRight 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.slideUp { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.spin { animation: spin 0.7s linear infinite; display: inline-block; }
+.float { animation: float 3s ease-in-out infinite; }
+.glow { animation: glow 3s ease-in-out infinite; }
+
+/* ─── TAG BADGES ──────────────────────────────────────────────────────── */
+.tag-Technical { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+.tag-HR { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+.tag-Background { background: rgba(139,92,246,0.1); color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
+.tag-Behavioral { background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+.diff-Easy { background: rgba(16,185,129,0.08); color: #34d399; border: 1px solid rgba(16,185,129,0.15); }
+.diff-Medium { background: rgba(245,158,11,0.08); color: #fbbf24; border: 1px solid rgba(245,158,11,0.15); }
+.diff-Hard { background: rgba(239,68,68,0.08); color: #f87171; border: 1px solid rgba(239,68,68,0.15); }
+
+/* ─── INTERACTIVE ELEMENTS ────────────────────────────────────────────── */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  will-change: transform, box-shadow;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(59,130,246,0.1);
+  border-color: var(--border-hover) !important;
+}
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+.btn-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+}
+.btn-glow:active {
+  transform: translateY(0);
+}
+.btn-secondary-hover {
+  transition: all 0.2s ease;
+}
+.btn-secondary-hover:hover {
+  border-color: var(--blue) !important;
+  background: rgba(59,130,246,0.05) !important;
+  color: var(--text) !important;
+}
+.sidebar-btn {
+  transition: all 0.2s ease !important;
+}
+.sidebar-btn:hover {
+  border-color: var(--blue) !important;
+  background: rgba(59,130,246,0.06) !important;
+  transform: translateX(3px);
+}
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, rgba(255,255,255,0.04) 50%, var(--card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Glass effect */
+.glass {
+  background: var(--glass) !important;
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--glass-border) !important;
+}
+
+/* Focus styles */
+input:focus, textarea:focus, select:focus {
+  border-color: var(--blue) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  outline: none;
+}
 `;
 
 // ─── SMALL COMPONENTS ───────────────────────────────────────────────────────
 const Badge = ({ label, cls }) => (
-  <span style={{ fontSize:10, fontWeight:600, padding:"3px 9px", borderRadius:20, textTransform:"uppercase", letterSpacing:"0.5px", fontFamily:"var(--mono)", display:"inline-block" }} className={cls}>{label}</span>
+  <span style={{ fontSize:10, fontWeight:600, padding:"3px 10px", borderRadius:20, textTransform:"uppercase", letterSpacing:"0.5px", fontFamily:"var(--mono)", display:"inline-block", transition:"all 0.2s" }} className={cls}>{label}</span>
 );
-const Spinner = () => <span className="spin">⟳</span>;
-const TypingDots = () => (
-  <span style={{display:"inline-flex",gap:4,alignItems:"center",padding:"2px 0"}}>
-    {[0,160,320].map((d,i) => <span key={i} style={{ width:6,height:6,borderRadius:"50%",background:"var(--green)",display:"inline-block",animation:`dot1 1.2s ease-in-out ${d}ms infinite` }}/>)}
+
+const Spinner = () => (
+  <span style={{ display:"inline-flex", alignItems:"center", justifyContent:"center" }}>
+    <svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2.5" strokeLinecap="round">
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" opacity="0.3"/>
+      <path d="M12 2v4"/>
+    </svg>
   </span>
 );
-const Toast = ({ msg, visible }) => (
-  <div style={{ position:"fixed",bottom:24,right:24,zIndex:9999,background:"var(--card)",border:"1px solid var(--green)",color:"var(--green)",padding:"11px 18px",borderRadius:10,fontSize:13,fontFamily:"var(--font)",opacity:visible?1:0,transform:visible?"translateY(0)":"translateY(10px)",transition:"all 0.3s",pointerEvents:"none",display:"flex",alignItems:"center",gap:8 }}>✓ {msg}</div>
+
+const TypingDots = () => (
+  <span style={{display:"inline-flex",gap:3,alignItems:"center",padding:"2px 0"}}>
+    {[0,150,300].map((d,i) => <span key={i} style={{ width:5,height:5,borderRadius:"50%",background:"var(--green)",display:"inline-block",animation:`dotBounce 1.4s ease-in-out ${d}ms infinite` }}/>)}
+  </span>
 );
 
-const primaryBtn = { padding:"10px 20px",borderRadius:10,background:"var(--blue)",border:"none",color:"#fff",fontSize:13,fontWeight:600,fontFamily:"var(--font)",cursor:"pointer" };
-const secondaryBtn = { padding:"10px 20px",borderRadius:10,background:"var(--card)",border:"1px solid var(--border)",color:"var(--text)",fontSize:13,fontWeight:600,fontFamily:"var(--font)",cursor:"pointer" };
-const selectSt = { background:"var(--card)",border:"1px solid var(--border)",color:"var(--text)",padding:"8px 14px",borderRadius:8,fontSize:13,fontFamily:"var(--font)",width:"100%",outline:"none",cursor:"pointer" };
-const sideCard = { background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,padding:18 };
-const sideTitle = { fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:1,color:"var(--muted)",marginBottom:14,fontFamily:"var(--mono)" };
-const filterSS = { background:"var(--card)",border:"1px solid var(--border)",color:"var(--text2)",padding:"7px 28px 7px 11px",borderRadius:8,fontSize:12,fontFamily:"var(--font)",cursor:"pointer",outline:"none",appearance:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 9px center" };
+const Toast = ({ msg, visible }) => (
+  <div className={visible ? "slideUp" : ""} style={{
+    position:"fixed", bottom:28, right:28, zIndex:9999,
+    background:"var(--card)", border:"1px solid rgba(16,185,129,0.3)",
+    color:"var(--green)", padding:"12px 20px", borderRadius:14,
+    fontSize:13, fontWeight:500, fontFamily:"var(--font)",
+    opacity:visible?1:0, transform:visible?"translateY(0)":"translateY(20px)",
+    transition:"all 0.4s cubic-bezier(0.16,1,0.3,1)",
+    pointerEvents:"none", display:"flex", alignItems:"center", gap:10,
+    boxShadow:"0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(16,185,129,0.1)",
+    backdropFilter:"blur(16px)",
+  }}>
+    <span style={{width:20,height:20,borderRadius:"50%",background:"var(--green-dim)",border:"1px solid rgba(16,185,129,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,flexShrink:0}}>✓</span>
+    {msg}
+  </div>
+);
 
-// ─── QUESTION CARD ──────────────────────────────────────────────────────────
+// Skeleton Card for loading states
+const SkeletonCard = () => (
+  <div style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,padding:24,borderLeft:"3px solid var(--border)"}}>
+    <div style={{display:"flex",gap:8,marginBottom:16}}>
+      <div className="skeleton" style={{width:70,height:22}}/>
+      <div className="skeleton" style={{width:55,height:22}}/>
+    </div>
+    <div className="skeleton" style={{width:"90%",height:16,marginBottom:10}}/>
+    <div className="skeleton" style={{width:"65%",height:16,marginBottom:20}}/>
+    <div style={{display:"flex",gap:8}}>
+      <div className="skeleton" style={{width:100,height:34}}/>
+      <div className="skeleton" style={{width:130,height:34}}/>
+    </div>
+  </div>
+);
+
+const primaryBtn = {
+  padding:"10px 22px", borderRadius:12,
+  background:"linear-gradient(135deg, var(--blue), #2563eb)",
+  border:"none", color:"#fff", fontSize:13, fontWeight:600,
+  fontFamily:"var(--font)", cursor:"pointer",
+  transition:"all 0.25s ease",
+  boxShadow:"0 2px 12px rgba(59,130,246,0.25)",
+};
+const secondaryBtn = {
+  padding:"10px 22px", borderRadius:12,
+  background:"var(--card)", border:"1px solid var(--border)",
+  color:"var(--text2)", fontSize:13, fontWeight:500,
+  fontFamily:"var(--font)", cursor:"pointer",
+  transition:"all 0.2s ease",
+};
+const selectSt = {
+  background:"var(--card)", border:"1px solid var(--border)",
+  color:"var(--text)", padding:"9px 14px", borderRadius:10,
+  fontSize:13, fontFamily:"var(--font)", width:"100%",
+  outline:"none", cursor:"pointer", transition:"border-color 0.2s",
+};
+const sideCard = {
+  background:"var(--card)", border:"1px solid var(--border)",
+  borderRadius:16, padding:20,
+  transition:"all 0.3s ease",
+};
+const sideTitle = {
+  fontSize:10, fontWeight:600, textTransform:"uppercase",
+  letterSpacing:1.2, color:"var(--muted)", marginBottom:16,
+  fontFamily:"var(--mono)",
+};
+const filterSS = {
+  background:"var(--card)", border:"1px solid var(--border)",
+  color:"var(--text2)", padding:"7px 30px 7px 11px", borderRadius:10,
+  fontSize:12, fontFamily:"var(--font)", cursor:"pointer",
+  outline:"none", appearance:"none", transition:"border-color 0.2s",
+  backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+  backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center",
+};
+
+// ─── QUESTION CARD (PREMIUM) ────────────────────────────────────────────────
 function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, showToast }) {
   const [answer, setAnswer] = useState(null);
   const [generating, setGenerating] = useState(false);
@@ -108,7 +329,7 @@ function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, show
     typewriterRef.current = setInterval(() => {
       if (i < text.length) setDisplayedAnswer(text.slice(0, ++i));
       else clearInterval(typewriterRef.current);
-    }, text.length > 600 ? 6 : 10);
+    }, text.length > 600 ? 5 : 8);
   }, []);
 
   const generate = async (feedback = null) => {
@@ -133,57 +354,87 @@ function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, show
   };
 
   const isTyping = generating || (displayedAnswer && displayedAnswer.length < (answer?.length || 0));
+  const iconBtn = (active, activeColor, activeBg) => ({
+    width:34, height:34, borderRadius:10,
+    background: active ? activeBg : "rgba(255,255,255,0.03)",
+    border:`1px solid ${active ? activeColor : "var(--border)"}`,
+    color: active ? activeColor : "var(--muted)",
+    cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+    fontSize:14, transition:"all 0.2s ease",
+  });
 
   return (
-    <div className="fadeUp" style={{ background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,padding:22,borderLeft:showAnswer?"3px solid var(--green)":"3px solid var(--border)",transition:"all 0.25s" }}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:12}}>
+    <div className="card-hover" style={{
+      background:"var(--card)", border:"1px solid var(--border)", borderRadius:16, padding:24,
+      borderLeft: showAnswer ? "3px solid var(--green)" : "3px solid transparent",
+      transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)",
+    }}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:14}}>
         <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
           <Badge label={q.type} cls={`tag-${q.type}`}/>
           <Badge label={q.diff} cls={`diff-${q.diff}`}/>
-          <span style={{fontSize:11,color:"var(--muted)"}}>|</span>
-          <span style={{fontSize:12,color:"var(--text2)"}}>{q.job}</span>
-          {q.company && <><span style={{fontSize:11,color:"var(--muted)"}}>·</span><span style={{fontSize:11,color:"var(--blue)"}}>{q.company}</span></>}
+          <span style={{fontSize:11,color:"var(--muted)",margin:"0 2px"}}>·</span>
+          <span style={{fontSize:12,color:"var(--text2)",fontWeight:500}}>{q.job}</span>
+          {q.company && <><span style={{fontSize:11,color:"var(--muted)"}}>·</span><span style={{fontSize:11,color:"var(--blue)",fontWeight:500}}>{q.company}</span></>}
         </div>
-        <span style={{fontSize:11,color:"var(--muted)",fontFamily:"var(--mono)",flexShrink:0}}>{q.date}</span>
+        <span style={{fontSize:11,color:"var(--muted)",fontFamily:"var(--mono)",flexShrink:0,opacity:0.7}}>{q.date}</span>
       </div>
-      <p style={{fontSize:15,fontWeight:500,lineHeight:1.6,color:"var(--text)",marginBottom:18}}>{q.text}</p>
+      <p style={{fontSize:15,fontWeight:500,lineHeight:1.7,color:"var(--text)",marginBottom:20,letterSpacing:"-0.2px"}}>{q.text}</p>
       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-        <select value={tone} onChange={e=>setTone(e.target.value)} style={{...filterSS,padding:"6px 28px 6px 10px",fontSize:12}}>
+        <select value={tone} onChange={e=>setTone(e.target.value)} style={{...filterSS,padding:"7px 30px 7px 10px",fontSize:12,width:"auto"}}>
           {Object.entries(TONES).map(([k,v])=><option key={k} value={k}>{v}</option>)}
         </select>
-        <button onClick={()=>generate()} disabled={generating} style={{ display:"flex",alignItems:"center",gap:7,padding:"7px 16px",borderRadius:8,background:"linear-gradient(135deg,#1b3564,#152a50)",border:"1px solid rgba(61,125,232,0.45)",color:"#6ea8fe",fontSize:12,fontWeight:600,fontFamily:"var(--font)",cursor:generating?"not-allowed":"pointer",opacity:generating?0.7:1 }}>
+        <button className="btn-glow" onClick={()=>generate()} disabled={generating} style={{
+          display:"flex",alignItems:"center",gap:7,padding:"8px 18px",borderRadius:10,
+          background:"linear-gradient(135deg,#1e3a6e,#162d5a)",
+          border:"1px solid rgba(59,130,246,0.35)",color:"#60a5fa",
+          fontSize:12,fontWeight:600,fontFamily:"var(--font)",
+          cursor:generating?"not-allowed":"pointer",opacity:generating?0.7:1,
+        }}>
           {generating?<><Spinner/> Generating…</>:<>⚡ {answer?"Regenerate":"Generate Answer"}</>}
         </button>
-        {onDelete && <button onClick={()=>onDelete(q.id)} title="Delete Question" style={{ width:32,height:32,borderRadius:8,background:"var(--red-dim)",border:"1px solid var(--red)",color:"var(--red)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>🗑️</button>}
-        <button onClick={()=>onBookmark(q.id)} title="Bookmark" style={{ width:32,height:32,borderRadius:8,background:bookmarked?"var(--red-dim)":"var(--surface)",border:`1px solid ${bookmarked?"var(--red)":"var(--border)"}`,color:bookmarked?"var(--red)":"var(--text2)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>🔖</button>
-        <button onClick={()=>{navigator.clipboard.writeText(q.text);showToast("Question copied!")}} title="Copy" style={{ width:32,height:32,borderRadius:8,background:"var(--surface)",border:"1px solid var(--border)",color:"var(--text2)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>📋</button>
-        <button onClick={()=>onLike(q.id)} style={{ display:"flex",alignItems:"center",gap:5,marginLeft:"auto",background:"none",border:"none",cursor:"pointer",color:liked?"var(--blue)":"var(--muted)",fontSize:12,fontFamily:"var(--font)",padding:"4px 8px",borderRadius:6 }}>
+        {onDelete && <button onClick={()=>onDelete(q.id)} title="Delete" style={iconBtn(false,"var(--red)","var(--red-dim)")}>🗑️</button>}
+        <button onClick={()=>onBookmark(q.id)} title="Bookmark" style={iconBtn(bookmarked,"var(--red)","var(--red-dim)")}>🔖</button>
+        <button onClick={()=>{navigator.clipboard.writeText(q.text);showToast("Question copied!")}} title="Copy" style={iconBtn(false,"var(--text2)","transparent")}>📋</button>
+        <button onClick={()=>onLike(q.id)} style={{
+          display:"flex",alignItems:"center",gap:5,marginLeft:"auto",
+          background:liked?"var(--blue-dim)":"transparent",
+          border:`1px solid ${liked?"rgba(59,130,246,0.3)":"transparent"}`,
+          cursor:"pointer",color:liked?"var(--blue)":"var(--muted)",
+          fontSize:12,fontWeight:500,fontFamily:"var(--font)",
+          padding:"5px 10px",borderRadius:8,transition:"all 0.2s",
+        }}>
           👍 {q.upvotes||0}
         </button>
       </div>
       {showAnswer && (
-        <div className="fadeIn" style={{marginTop:16,borderTop:"1px solid var(--border)",paddingTop:16}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",color:"var(--green)",fontFamily:"var(--mono)"}}>
-              <span style={{width:6,height:6,borderRadius:"50%",background:"var(--green)",display:"inline-block",animation:generating?"pulse 1s infinite":"none"}}/>AI Answer{isTyping&&!generating&&<TypingDots/>}
+        <div className="fadeIn" style={{marginTop:18,borderTop:"1px solid var(--border)",paddingTop:18}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:"uppercase",color:"var(--green)",fontFamily:"var(--mono)"}}>
+              <span style={{
+                width:7,height:7,borderRadius:"50%",background:"var(--green)",display:"inline-block",
+                animation:generating?"pulse 1s infinite":"none",
+                boxShadow:generating?"0 0 8px var(--green)":"none",
+              }}/>
+              AI Answer{isTyping&&!generating&&<TypingDots/>}
             </div>
             {answer&&<div style={{display:"flex",gap:6}}>
-              <button onClick={handleTTS} style={{background:ttsPlaying?"var(--green-dim)":"var(--surface)",border:`1px solid ${ttsPlaying?"var(--green)":"var(--border)"}`,color:ttsPlaying?"var(--green)":"var(--text2)",padding:"4px 10px",borderRadius:6,fontSize:11,cursor:"pointer",fontFamily:"var(--font)"}}>🔊 {ttsPlaying?"Stop":"Listen"}</button>
-              <button onClick={()=>{navigator.clipboard.writeText(answer);showToast("Copied!")}} style={{background:"var(--surface)",border:"1px solid var(--border)",color:"var(--text2)",padding:"4px 10px",borderRadius:6,fontSize:11,cursor:"pointer",fontFamily:"var(--font)"}}>📋 Copy</button>
+              <button className="btn-secondary-hover" onClick={handleTTS} style={{background:ttsPlaying?"var(--green-dim)":"rgba(255,255,255,0.03)",border:`1px solid ${ttsPlaying?"rgba(16,185,129,0.3)":"var(--border)"}`,color:ttsPlaying?"var(--green)":"var(--text2)",padding:"5px 12px",borderRadius:8,fontSize:11,cursor:"pointer",fontFamily:"var(--font)",fontWeight:500,transition:"all 0.2s"}}>🔊 {ttsPlaying?"Stop":"Listen"}</button>
+              <button className="btn-secondary-hover" onClick={()=>{navigator.clipboard.writeText(answer);showToast("Copied!")}} style={{background:"rgba(255,255,255,0.03)",border:"1px solid var(--border)",color:"var(--text2)",padding:"5px 12px",borderRadius:8,fontSize:11,cursor:"pointer",fontFamily:"var(--font)",fontWeight:500,transition:"all 0.2s"}}>📋 Copy</button>
             </div>}
           </div>
-          {generating&&!displayedAnswer?<div style={{color:"var(--muted)",fontSize:13}}><TypingDots/></div>:
-          <p style={{fontSize:13.5,lineHeight:1.8,color:"var(--text2)",whiteSpace:"pre-wrap",borderLeft:"2px solid var(--green)",paddingLeft:14}}>
+          {generating&&!displayedAnswer?<div style={{color:"var(--muted)",fontSize:13,padding:"8px 0"}}><TypingDots/></div>:
+          <p style={{fontSize:13.5,lineHeight:1.85,color:"var(--text2)",whiteSpace:"pre-wrap",borderLeft:"2px solid var(--green)",paddingLeft:16,margin:"4px 0"}}>
             {displayedAnswer}{isTyping&&!generating&&<span style={{animation:"blink 0.7s step-end infinite",color:"var(--green)"}}>▋</span>}
           </p>}
           {answer&&!generating&&(
-            <div style={{display:"flex",alignItems:"center",gap:10,marginTop:14,paddingTop:12,borderTop:"1px solid var(--border)",flexWrap:"wrap"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginTop:16,paddingTop:14,borderTop:"1px solid var(--border)",flexWrap:"wrap"}}>
               <span style={{fontSize:12,color:"var(--muted)"}}>Helpful?</span>
-              <button onClick={()=>{setRating("good");setShowFeedback(false);showToast("Thanks!")}} style={{background:rating==="good"?"var(--green-dim)":"var(--surface)",border:`1px solid ${rating==="good"?"var(--green)":"var(--border)"}`,color:rating==="good"?"var(--green)":"var(--text2)",padding:"4px 12px",borderRadius:20,fontSize:11,cursor:"pointer",fontFamily:"var(--font)"}}>👍 Yes</button>
-              <button onClick={()=>{setRating("bad");setShowFeedback(true)}} style={{background:rating==="bad"?"var(--red-dim)":"var(--surface)",border:`1px solid ${rating==="bad"?"var(--red)":"var(--border)"}`,color:rating==="bad"?"var(--red)":"var(--text2)",padding:"4px 12px",borderRadius:20,fontSize:11,cursor:"pointer",fontFamily:"var(--font)"}}>👎 Improve</button>
+              <button onClick={()=>{setRating("good");setShowFeedback(false);showToast("Thanks!")}} style={{background:rating==="good"?"var(--green-dim)":"rgba(255,255,255,0.03)",border:`1px solid ${rating==="good"?"rgba(16,185,129,0.3)":"var(--border)"}`,color:rating==="good"?"var(--green)":"var(--text2)",padding:"5px 14px",borderRadius:20,fontSize:11,cursor:"pointer",fontFamily:"var(--font)",fontWeight:500,transition:"all 0.2s"}}>👍 Yes</button>
+              <button onClick={()=>{setRating("bad");setShowFeedback(true)}} style={{background:rating==="bad"?"var(--red-dim)":"rgba(255,255,255,0.03)",border:`1px solid ${rating==="bad"?"rgba(239,68,68,0.3)":"var(--border)"}`,color:rating==="bad"?"var(--red)":"var(--text2)",padding:"5px 14px",borderRadius:20,fontSize:11,cursor:"pointer",fontFamily:"var(--font)",fontWeight:500,transition:"all 0.2s"}}>👎 Improve</button>
               {showFeedback&&<>
-                <input value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="How to improve…" style={{flex:1,minWidth:140,background:"var(--surface)",border:"1px solid var(--border)",color:"var(--text)",padding:"5px 10px",borderRadius:6,fontSize:11,fontFamily:"var(--font)",outline:"none"}}/>
-                <button onClick={()=>generate(feedbackText)} style={{background:"var(--red)",border:"none",color:"#fff",padding:"5px 12px",borderRadius:6,fontSize:11,cursor:"pointer",fontFamily:"var(--font)"}}>Regenerate</button>
+                <input value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="How to improve…" style={{flex:1,minWidth:140,background:"rgba(255,255,255,0.03)",border:"1px solid var(--border)",color:"var(--text)",padding:"6px 12px",borderRadius:8,fontSize:11,fontFamily:"var(--font)",outline:"none",transition:"border-color 0.2s"}}/>
+                <button className="btn-glow" onClick={()=>generate(feedbackText)} style={{background:"var(--red)",border:"none",color:"#fff",padding:"6px 14px",borderRadius:8,fontSize:11,cursor:"pointer",fontFamily:"var(--font)",fontWeight:600}}>Regenerate</button>
               </>}
             </div>
           )}
@@ -193,4 +444,4 @@ function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, show
   );
 }
 
-export { QuestionCard, Badge, Spinner, TypingDots, Toast, css, apiFetch, callAI, primaryBtn, secondaryBtn, selectSt, sideCard, sideTitle, filterSS, API_BASE, PAGE_SIZE };
+export { QuestionCard, Badge, Spinner, TypingDots, Toast, SkeletonCard, css, apiFetch, callAI, primaryBtn, secondaryBtn, selectSt, sideCard, sideTitle, filterSS, API_BASE, PAGE_SIZE };

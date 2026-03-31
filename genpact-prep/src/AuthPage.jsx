@@ -2,23 +2,25 @@ import { useState } from "react";
 import { useAuth } from "./AuthContext";
 
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
-  --bg: #0b0d13; --surface: #111318; --card: #161921; --card-hover: #1c1f2a;
-  --border: #222632; --border-hover: #2e3447;
-  --red: #e84b3a; --red-dim: rgba(232,75,58,0.12);
-  --blue: #3d7de8; --blue-dim: rgba(61,125,232,0.12);
-  --green: #00c896; --green-dim: rgba(0,200,150,0.1);
-  --yellow: #f5a623; --purple: #a855f7;
-  --text: #eaedf5; --text2: #9aa3b8; --muted: #555f78;
-  --font: 'Sora', sans-serif; --mono: 'IBM Plex Mono', monospace;
-  --shadow: 0 4px 24px rgba(0,0,0,0.5); --radius: 12px;
+  --bg: #08090d; --surface: #0e1015; --card: #141720; --card-hover: #1a1e2e;
+  --border: #1e2235; --border-hover: #2a3050;
+  --red: #ef4444; --red-dim: rgba(239,68,68,0.1);
+  --blue: #3b82f6; --blue-dim: rgba(59,130,246,0.1);
+  --green: #10b981; --green-dim: rgba(16,185,129,0.08);
+  --yellow: #f59e0b; --purple: #8b5cf6;
+  --text: #f1f5f9; --text2: #94a3b8; --muted: #4b5563;
+  --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
 }
-body { font-family:var(--font); background:var(--bg); color:var(--text); }
-@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-@keyframes glow { 0%,100%{opacity:0.4} 50%{opacity:1} }
+body { font-family:var(--font); background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
+@keyframes float { 0%,100% { transform: translate(0,0) scale(1) } 33% { transform: translate(30px,-20px) scale(1.05) } 66% { transform: translate(-20px, 15px) scale(0.95) } }
+@keyframes float2 { 0%,100% { transform: translate(0,0) scale(1) } 33% { transform: translate(-25px,20px) scale(1.08) } 66% { transform: translate(15px, -25px) scale(0.92) } }
+@keyframes pulse-ring { 0% { transform: scale(0.8); opacity:0.5 } 50% { transform:scale(1); opacity:0.2 } 100% { transform:scale(0.8); opacity:0.5 } }
+@keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+@keyframes rotate-slow { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 `;
 
 export default function AuthPage() {
@@ -74,39 +76,55 @@ export default function AuthPage() {
         minHeight:"100vh", background:"var(--bg)", display:"flex", alignItems:"center", justifyContent:"center",
         padding:20, position:"relative", overflow:"hidden",
       }}>
-        {/* Ambient glow */}
-        <div style={{ position:"absolute", top:"-20%", left:"-10%", width:500, height:500, borderRadius:"50%", background:"radial-gradient(circle, rgba(61,125,232,0.08), transparent 70%)", pointerEvents:"none" }} />
-        <div style={{ position:"absolute", bottom:"-15%", right:"-5%", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle, rgba(232,75,58,0.06), transparent 70%)", pointerEvents:"none" }} />
+        {/* Animated ambient blobs */}
+        <div style={{ position:"absolute", top:"-15%", left:"-8%", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle, rgba(59,130,246,0.07), transparent 65%)", pointerEvents:"none", animation:"float 20s ease-in-out infinite" }} />
+        <div style={{ position:"absolute", bottom:"-10%", right:"-5%", width:500, height:500, borderRadius:"50%", background:"radial-gradient(circle, rgba(239,68,68,0.05), transparent 65%)", pointerEvents:"none", animation:"float2 25s ease-in-out infinite" }} />
+        <div style={{ position:"absolute", top:"40%", left:"60%", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle, rgba(139,92,246,0.04), transparent 65%)", pointerEvents:"none", animation:"float 18s ease-in-out infinite reverse" }} />
+
+        {/* Decorative grid */}
+        <div style={{
+          position:"absolute", inset:0, opacity:0.03, pointerEvents:"none",
+          backgroundImage:"linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize:"60px 60px",
+        }}/>
 
         <div style={{
-          width:"100%", maxWidth:420, animation:"fadeUp 0.5s ease both",
+          width:"100%", maxWidth:440, animation:"fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both",
+          position:"relative", zIndex:1,
         }}>
           {/* Logo */}
-          <div style={{ textAlign:"center", marginBottom:36 }}>
-            <div style={{ display:"inline-flex", alignItems:"center", gap:12, marginBottom:16 }}>
-              <div style={{ width:44, height:44, display:"grid", gridTemplateColumns:"1fr 1fr", gap:3, transform:"rotate(45deg)" }}>
-                {["#e84b3a","#3d7de8","#3d7de8","#e84b3a"].map((c,i) => <span key={i} style={{ borderRadius:4, background:c }} />)}
+          <div style={{ textAlign:"center", marginBottom:40 }}>
+            <div style={{ display:"inline-flex", alignItems:"center", gap:14, marginBottom:20 }}>
+              <div style={{
+                width:48, height:48, display:"grid", gridTemplateColumns:"1fr 1fr", gap:3, transform:"rotate(45deg)",
+                filter:"drop-shadow(0 0 20px rgba(239,68,68,0.3))",
+              }}>
+                {["#ef4444","#3b82f6","#3b82f6","#ef4444"].map((c,i) => <span key={i} style={{ borderRadius:5, background:c, transition:"all 0.3s" }} />)}
               </div>
-              <span style={{ fontSize:28, fontWeight:700, letterSpacing:"-1px" }}>Prep<span style={{ color:"var(--red)" }}>Wise</span></span>
+              <span style={{ fontSize:32, fontWeight:800, letterSpacing:"-1.5px" }}>Prep<span style={{ color:"var(--red)" }}>Wise</span></span>
             </div>
-            <p style={{ fontSize:14, color:"var(--text2)", lineHeight:1.6 }}>
+            <p style={{ fontSize:15, color:"var(--text2)", lineHeight:1.7, maxWidth:320, margin:"0 auto" }}>
               AI-powered interview prep for top companies
             </p>
           </div>
 
-          {/* Card */}
+          {/* Card with glassmorphism */}
           <div style={{
-            background:"var(--surface)", border:"1px solid var(--border)", borderRadius:20,
-            padding:32, boxShadow:"0 8px 40px rgba(0,0,0,0.4)",
+            background:"rgba(14,16,21,0.85)", border:"1px solid rgba(255,255,255,0.06)",
+            borderRadius:24, padding:36,
+            boxShadow:"0 16px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset",
+            backdropFilter:"blur(20px) saturate(1.3)",
+            WebkitBackdropFilter:"blur(20px) saturate(1.3)",
           }}>
             {/* Tabs */}
-            <div style={{ display:"flex", marginBottom:28, background:"var(--card)", borderRadius:12, padding:4 }}>
+            <div style={{ display:"flex", marginBottom:32, background:"rgba(255,255,255,0.03)", borderRadius:14, padding:4, border:"1px solid var(--border)" }}>
               {["login", "signup"].map(m => (
                 <button key={m} onClick={() => { setMode(m); setError(""); }} style={{
-                  flex:1, padding:"10px 0", borderRadius:10, border:"none", cursor:"pointer",
-                  fontFamily:"var(--font)", fontSize:13, fontWeight:600, transition:"all 0.2s",
-                  background: mode === m ? "var(--blue)" : "transparent",
+                  flex:1, padding:"11px 0", borderRadius:11, border:"none", cursor:"pointer",
+                  fontFamily:"var(--font)", fontSize:13, fontWeight:600, transition:"all 0.3s cubic-bezier(0.16,1,0.3,1)",
+                  background: mode === m ? "linear-gradient(135deg, var(--blue), #2563eb)" : "transparent",
                   color: mode === m ? "#fff" : "var(--muted)",
+                  boxShadow: mode === m ? "0 2px 12px rgba(59,130,246,0.25)" : "none",
                 }}>
                   {m === "login" ? "Log In" : "Sign Up"}
                 </button>
@@ -115,13 +133,13 @@ export default function AuthPage() {
 
             {/* Google button */}
             <button onClick={handleGoogle} disabled={loading} style={{
-              width:"100%", padding:"12px 0", borderRadius:12, cursor: loading ? "not-allowed" : "pointer",
-              background:"var(--card)", border:"1px solid var(--border)", color:"var(--text)",
+              width:"100%", padding:"13px 0", borderRadius:14, cursor: loading ? "not-allowed" : "pointer",
+              background:"rgba(255,255,255,0.04)", border:"1px solid var(--border)", color:"var(--text)",
               fontSize:13, fontWeight:600, fontFamily:"var(--font)", display:"flex", alignItems:"center",
-              justifyContent:"center", gap:10, marginBottom:20, transition:"border-color 0.2s",
+              justifyContent:"center", gap:10, marginBottom:24, transition:"all 0.25s",
             }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = "var(--blue)"}
-            onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)"; e.currentTarget.style.background = "rgba(59,130,246,0.05)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -133,17 +151,17 @@ export default function AuthPage() {
             </button>
 
             {/* Divider */}
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-              <div style={{ flex:1, height:1, background:"var(--border)" }} />
-              <span style={{ fontSize:11, color:"var(--muted)", textTransform:"uppercase", letterSpacing:1 }}>or</span>
-              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+            <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:24 }}>
+              <div style={{ flex:1, height:1, background:"linear-gradient(90deg, transparent, var(--border), transparent)" }} />
+              <span style={{ fontSize:11, color:"var(--muted)", textTransform:"uppercase", letterSpacing:1.5, fontWeight:500 }}>or</span>
+              <div style={{ flex:1, height:1, background:"linear-gradient(90deg, transparent, var(--border), transparent)" }} />
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit}>
               {mode === "signup" && (
-                <div style={{ marginBottom:14 }}>
-                  <label style={{ display:"block", fontSize:12, color:"var(--text2)", marginBottom:6 }}>Full Name</label>
+                <div style={{ marginBottom:16 }}>
+                  <label style={{ display:"block", fontSize:12, color:"var(--text2)", marginBottom:7, fontWeight:500 }}>Full Name</label>
                   <input
                     value={name} onChange={e => setName(e.target.value)}
                     placeholder="John Doe"
@@ -151,16 +169,16 @@ export default function AuthPage() {
                   />
                 </div>
               )}
-              <div style={{ marginBottom:14 }}>
-                <label style={{ display:"block", fontSize:12, color:"var(--text2)", marginBottom:6 }}>Email</label>
+              <div style={{ marginBottom:16 }}>
+                <label style={{ display:"block", fontSize:12, color:"var(--text2)", marginBottom:7, fontWeight:500 }}>Email</label>
                 <input
                   type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com" required
                   style={inputStyle}
                 />
               </div>
-              <div style={{ marginBottom:20 }}>
-                <label style={{ display:"block", fontSize:12, color:"var(--text2)", marginBottom:6 }}>Password</label>
+              <div style={{ marginBottom:24 }}>
+                <label style={{ display:"block", fontSize:12, color:"var(--text2)", marginBottom:7, fontWeight:500 }}>Password</label>
                 <input
                   type="password" value={password} onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••" required minLength={6}
@@ -170,28 +188,38 @@ export default function AuthPage() {
 
               {error && (
                 <div style={{
-                  background:"var(--red-dim)", border:"1px solid rgba(232,75,58,0.3)", borderRadius:10,
-                  padding:"10px 14px", marginBottom:16, fontSize:12, color:"#f87171", lineHeight:1.5,
+                  background:"var(--red-dim)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:12,
+                  padding:"11px 16px", marginBottom:18, fontSize:12, color:"#f87171", lineHeight:1.6,
+                  display:"flex", alignItems:"center", gap:8,
+                  animation:"fadeUp 0.3s ease both",
                 }}>
-                  ⚠️ {error}
+                  <span style={{fontSize:14}}>⚠️</span> {error}
                 </div>
               )}
 
               <button type="submit" disabled={loading} style={{
-                width:"100%", padding:"12px 0", borderRadius:12, border:"none", cursor: loading ? "not-allowed" : "pointer",
-                background:"linear-gradient(135deg, var(--blue), #2563eb)", color:"#fff",
-                fontSize:14, fontWeight:600, fontFamily:"var(--font)", transition:"opacity 0.2s",
-                opacity: loading ? 0.7 : 1,
-              }}>
+                width:"100%", padding:"13px 0", borderRadius:14, border:"none",
+                cursor: loading ? "not-allowed" : "pointer",
+                background:"linear-gradient(135deg, var(--blue), #2563eb)",
+                color:"#fff", fontSize:14, fontWeight:600, fontFamily:"var(--font)",
+                transition:"all 0.25s", opacity: loading ? 0.7 : 1,
+                boxShadow:"0 4px 20px rgba(59,130,246,0.3)",
+                letterSpacing:"-0.2px",
+              }}
+              onMouseEnter={e => { if(!loading) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(59,130,246,0.4)"; }}}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(59,130,246,0.3)"; }}
+              >
                 {loading ? "Please wait…" : mode === "login" ? "Log In" : "Create Account"}
               </button>
             </form>
           </div>
 
           {/* Footer */}
-          <p style={{ textAlign:"center", marginTop:20, fontSize:12, color:"var(--muted)" }}>
-            Practice for Genpact, TCS, Infosys, Wipro, Accenture & more
-          </p>
+          <div style={{ textAlign:"center", marginTop:28 }}>
+            <p style={{ fontSize:12, color:"var(--muted)", lineHeight:1.7 }}>
+              Practice for <span style={{color:"var(--text2)"}}>Genpact</span> · <span style={{color:"var(--text2)"}}>TCS</span> · <span style={{color:"var(--text2)"}}>Infosys</span> · <span style={{color:"var(--text2)"}}>Wipro</span> · <span style={{color:"var(--text2)"}}>Accenture</span> & more
+            </p>
+          </div>
         </div>
       </div>
     </>
@@ -199,7 +227,9 @@ export default function AuthPage() {
 }
 
 const inputStyle = {
-  width:"100%", padding:"11px 14px", borderRadius:10, outline:"none",
-  background:"var(--card)", border:"1px solid var(--border)", color:"var(--text)",
-  fontSize:13, fontFamily:"'Sora', sans-serif", transition:"border-color 0.2s",
+  width:"100%", padding:"12px 16px", borderRadius:12, outline:"none",
+  background:"rgba(255,255,255,0.03)", border:"1px solid var(--border)",
+  color:"var(--text)", fontSize:13, fontFamily:"'Inter', sans-serif",
+  transition:"all 0.25s",
+  letterSpacing:"-0.1px",
 };

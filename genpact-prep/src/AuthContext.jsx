@@ -23,8 +23,13 @@ export function AuthProvider({ children }) {
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
       // If we are hardcoded domain, ignore firebase nulls
       if (localStorage.getItem("domainAuth") === "true") {
-        setProfile({ role: 'domain', name: 'Domain Expert', email: 'jayarahul696@gmail.com' });
         setUser({ uid: 'domain-hardcoded' });
+        try {
+          const p = await apiFetch(`${API_BASE}/user/profile`, {}, "DOMAIN_SECRET_TOKEN_87654321");
+          setProfile(p);
+        } catch {
+          setProfile(null);
+        }
         setLoading(false);
         return;
       }
@@ -54,7 +59,6 @@ export function AuthProvider({ children }) {
   };
 
   const refreshProfile = async () => {
-    if (localStorage.getItem("domainAuth") === "true") return;
     try {
       const token = await getToken();
       if (token) {
@@ -72,11 +76,16 @@ export function AuthProvider({ children }) {
     setProfile(null);
   };
 
-  const signInAsDomain = () => {
+  const signInAsDomain = async () => {
     localStorage.setItem("domainAuth", "true");
-
     setUser({ uid: 'domain-hardcoded' });
-    setProfile({ role: 'domain', name: 'Domain Expert', email: 'jayarahul696@gmail.com' });
+    
+    try {
+      const p = await apiFetch(`${API_BASE}/user/profile`, {}, "DOMAIN_SECRET_TOKEN_87654321");
+      setProfile(p);
+    } catch {
+      setProfile({ role: 'domain', name: 'Domain Expert', email: 'jayarahul696@gmail.com' });
+    }
   };
 
   const signInWithEmail = async (email, password) => {

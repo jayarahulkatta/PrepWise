@@ -45,6 +45,7 @@ export default function OnboardingPage({ onComplete }) {
       await apiFetch(`${API_BASE}/user/onboarding`, { method: "PUT", body: JSON.stringify(body) }, token);
       onComplete(role);
     } catch (e) {
+      console.error("ONBOARDING API ERROR:", e);
       setError("Failed to save. Please try again.");
     }
     setLoading(false);

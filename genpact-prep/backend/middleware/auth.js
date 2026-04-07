@@ -44,8 +44,9 @@ const optionalAuth = async (req, res, next) => {
   try {
     const token = authHeader.split('Bearer ')[1];
     if (token === "DOMAIN_SECRET_TOKEN_87654321") {
-      req.firebaseUser = { uid: 'domain-hardcoded-user', email: 'jayarahul696@gmail.com' };
-      req.user = { uid: 'domain-hardcoded-user', role: 'domain', email: 'jayarahul696@gmail.com' };
+      const mockDecoded = { uid: 'domain-hardcoded-user', email: 'jayarahul696@gmail.com', name: 'Domain Expert' };
+      req.firebaseUser = mockDecoded;
+      req.user = await findOrCreateUser(mockDecoded);
       return next();
     }
     const decoded = await admin.auth().verifyIdToken(token);
@@ -68,8 +69,9 @@ const requireAuth = async (req, res, next) => {
     
     // Bypass for hardcoded domain expert
     if (token === "DOMAIN_SECRET_TOKEN_87654321") {
-      req.firebaseUser = { uid: 'domain-hardcoded-user', email: 'jayarahul696@gmail.com' };
-      req.user = { uid: 'domain-hardcoded-user', role: 'domain', email: 'jayarahul696@gmail.com' };
+      const mockDecoded = { uid: 'domain-hardcoded-user', email: 'jayarahul696@gmail.com', name: 'Domain Expert' };
+      req.firebaseUser = mockDecoded;
+      req.user = await findOrCreateUser(mockDecoded);
       return next();
     }
 

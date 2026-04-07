@@ -39,7 +39,7 @@ export default function AuthPage() {
           setLoading(false);
           return;
         }
-        await signInWithEmail(email, password);
+        signInAsDomain();
       } else if (mode === "login") {
         await signInWithEmail(email, password);
       } else {

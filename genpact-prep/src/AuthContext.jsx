@@ -18,18 +18,25 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isDomainUser, setIsDomainUser] = useState(localStorage.getItem("domainAuth") === "true");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
+      // If we are hardcoded domain, ignore firebase nulls
+      if (localStorage.getItem("domainAuth") === "true") {
+        setProfile({ role: 'domain', name: 'Domain Expert', email: 'jayarahul696@gmail.com' });
+        setUser({ uid: 'domain-hardcoded' });
+        setLoading(false);
+        return;
+      }
+
       if (fbUser) {
         setUser(fbUser);
-        // Try to load the profile from backend
         try {
           const token = await getIdToken(fbUser);
           const p = await apiFetch(`${API_BASE}/user/profile`, {}, token);
           setProfile(p);
         } catch {
-          // New user — profile will be created on first API call
           setProfile(null);
         }
       } else {
@@ -42,11 +49,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   const getToken = async () => {
+    if (localStorage.getItem("domainAuth") === "true") return "DOMAIN_SECRET_TOKEN_87654321";
     if (auth.currentUser) return getIdToken(auth.currentUser);
     return null;
   };
 
   const refreshProfile = async () => {
+    if (localStorage.getItem("domainAuth") === "true") return;
     try {
       const token = await getToken();
       if (token) {
@@ -57,9 +66,18 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
+    localStorage.removeItem("domainAuth");
+    setIsDomainUser(false);
     await fbSignOut(auth);
     setUser(null);
     setProfile(null);
+  };
+
+  const signInAsDomain = () => {
+    localStorage.setItem("domainAuth", "true");
+    setIsDomainUser(true);
+    setUser({ uid: 'domain-hardcoded' });
+    setProfile({ role: 'domain', name: 'Domain Expert', email: 'jayarahul696@gmail.com' });
   };
 
   const signInWithEmail = async (email, password) => {
@@ -83,7 +101,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{ 
       user, profile, loading, getToken, refreshProfile, signOut, 
-      signInWithEmail, signUpWithEmail, signInWithGoogle 
+      signInWithEmail, signUpWithEmail, signInWithGoogle, signInAsDomain 
     }}>
       {children}
     </AuthContext.Provider>

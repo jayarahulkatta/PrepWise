@@ -1,6 +1,15 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "./firebase";
-import { getIdToken, onAuthStateChanged, signOut as fbSignOut } from "firebase/auth";
+import { 
+  getIdToken, 
+  onAuthStateChanged, 
+  signOut as fbSignOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "firebase/auth";
 import { apiFetch, API_BASE } from "./utils/api";
 
 const AuthContext = createContext(null);
@@ -53,8 +62,29 @@ export function AuthProvider({ children }) {
     setProfile(null);
   };
 
+  const signInWithEmail = async (email, password) => {
+    return await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const signUpWithEmail = async (email, password, name) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+      await updateProfile(userCredential.user, { displayName: name });
+      setUser({ ...userCredential.user, displayName: name });
+    }
+    return userCredential;
+  };
+
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    return await signInWithPopup(auth, provider);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, getToken, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, profile, loading, getToken, refreshProfile, signOut, 
+      signInWithEmail, signUpWithEmail, signInWithGoogle 
+    }}>
       {children}
     </AuthContext.Provider>
   );

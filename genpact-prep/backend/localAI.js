@@ -92,9 +92,34 @@ function generateLocally(questionText, type, company) {
   return `That is an excellent question, and it is particularly relevant for a role at ${company}.\n\nIn my experience, the key to answering this effectively is combining strong theoretical understanding with practical examples. I would approach this by first breaking down the core concepts, then demonstrating how I have applied them in real projects.\n\nI am highly adaptable and always eager to learn new technologies. I'm confident that my problem-solving mindset and strong fundamentals make me well-suited for this position.`;
 }
 
+function isRelevantInterviewQuestion(text) {
+  const lower = text.toLowerCase();
+  
+  const techKeywords = [
+    'react', 'javascript', 'js', 'html', 'css', 'sql', 'database', 'dbms', 'node', 
+    'backend', 'frontend', 'fullstack', 'api', 'rest', 'graphql', 'python', 'java', 'c++', 
+    'algorithm', 'data structure', 'array', 'string', 'oop', 'class', 'object',
+    'bug', 'debug', 'web', 'app', 'software', 'engineer', 'developer', 'framework', 'library',
+    'cloud', 'aws', 'docker', 'git', 'agile', 'genpact', 'code', 'deploy'
+  ];
+  
+  const behaviorKeywords = [
+    'experience', 'tell me about a time', 'describe a time', 'conflict', 'manager', 
+    'team', 'project', 'leadership', 'career', 'goal', 'resume'
+  ];
+
+  return techKeywords.some(kw => lower.includes(kw)) || behaviorKeywords.some(kw => lower.includes(kw));
+}
+
 // ─── MAIN GENERATOR (CACHE → GEMINI → GROQ → LOCAL) ────────────────────────
 async function generateAnswer(questionText, type = 'Technical', tone = 'confident', role = '', company = 'Genpact') {
   const extractedQuestion = extractQuestionText(questionText);
+
+  // TOKEN OPTIMIZATION: Block random/irrelevant questions locally.
+  if (!isRelevantInterviewQuestion(extractedQuestion)) {
+    return "This question does not appear to be related to web applications, technology, or general interview preparation. To efficiently utilize AI tokens, please ask an interview-related question.";
+  }
+
   const cacheHash = hashQuestion(extractedQuestion, type, company, role);
 
   const cached = await getCachedAnswer(cacheHash);

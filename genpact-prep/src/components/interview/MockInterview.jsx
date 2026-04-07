@@ -90,7 +90,7 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
 
   const skip = () => {
     const q = questions[idx];
-    setScores(prev => [...prev, {
+    setScores(prev => [...prev.filter(s => s.qid !== q.id), {
       qid: q.id, questionText: q.text, skipped: true,
       technicalAccuracy: 0, communicationClarity: 0, structureOrganization: 0,
       depthOfExamples: 0, roleRelevance: 0, overallImpression: 0,
@@ -98,6 +98,13 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
     }]);
     setSkippedCount(s => s + 1);
     next();
+  };
+
+  const redraft = () => {
+    setFeedback(null);
+    // remove previous score for this question
+    setScores(prev => prev.filter(s => s.qid !== questions[idx].id));
+    setTimeLeft(timeLimit);
   };
 
   const next = () => {
@@ -202,30 +209,34 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
             <button className="btn-secondary-hover" onClick={skip} style={{ ...secondaryBtn, flex: 1 }}>Skip →</button>
           </div>}
           {loadingFeedback && <div style={{ marginTop: 18, textAlign: "center", color: "var(--text2)", fontSize: 13, padding: 12 }}><TypingDots /> <span style={{ marginLeft: 8 }}>Analyzing your answer across 6 axes…</span></div>}
-          {feedback && <div className="fadeUp" style={{ marginTop: 20, padding: 20, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderRadius: 16 }}>
+          {feedback && <div className="fadeUp" style={{ marginTop: 20, padding: 24, background: "linear-gradient(to bottom, var(--surface), var(--bg))", border: "1px solid var(--border)", borderRadius: 16, borderTop: "4px solid var(--blue)" }}>
+            <h4 style={{ fontSize: 13, fontWeight: 700, color: "var(--blue)", marginBottom: 16, textTransform: "uppercase", letterSpacing: 1 }}>🧠 Coach's Notes</h4>
             {/* 6-axis scores */}
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 20, display: "grid", gap: 10 }}>
               {SCORE_AXES.map(a => (
                 <ScoreBar key={a.key} value={feedback[a.key] || 0} color={scoreColor(feedback[a.key] || 0)} label={a.label} icon={a.icon} />
               ))}
             </div>
             {/* Strengths */}
-            {feedback.strengths?.length > 0 && <div style={{ marginBottom: 12 }}>
-              <span style={{ fontSize: 10, fontWeight: 600, color: "var(--green)", textTransform: "uppercase", letterSpacing: 1 }}>Strengths</span>
-              {feedback.strengths.map((s, i) => <div key={i} style={{ fontSize: 12, color: "var(--text2)", marginTop: 4, display: "flex", gap: 6 }}><span style={{ color: "var(--green)" }}>✓</span>{s}</div>)}
+            {feedback.strengths?.length > 0 && <div style={{ marginBottom: 16 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--green)", textTransform: "uppercase", letterSpacing: 1 }}>Strengths</span>
+              {feedback.strengths.map((s, i) => <div key={i} style={{ fontSize: 13, color: "var(--text)", marginTop: 6, display: "flex", gap: 8, alignItems: "start" }}><span style={{ color: "var(--green)", marginTop: 1 }}>✓</span><span>{s}</span></div>)}
             </div>}
             {/* Improvements */}
-            {feedback.improvements?.length > 0 && <div style={{ marginBottom: 12 }}>
-              <span style={{ fontSize: 10, fontWeight: 600, color: "var(--yellow)", textTransform: "uppercase", letterSpacing: 1 }}>To Improve</span>
-              {feedback.improvements.map((imp, i) => <div key={i} style={{ fontSize: 12, color: "var(--text2)", marginTop: 6, padding: 10, background: "var(--card)", borderRadius: 10, border: "1px solid var(--border)" }}>
-                <strong style={{ color: "var(--yellow)", fontSize: 11 }}>{imp.area}:</strong> {imp.issue}
-                <div style={{ marginTop: 4, color: "var(--blue-bright)", fontSize: 11 }}>💡 {imp.suggestion}</div>
+            {feedback.improvements?.length > 0 && <div style={{ marginBottom: 16 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--yellow)", textTransform: "uppercase", letterSpacing: 1 }}>To Improve</span>
+              {feedback.improvements.map((imp, i) => <div key={i} style={{ fontSize: 13, color: "var(--text)", marginTop: 8, padding: 12, background: "var(--card-highest)", borderRadius: 12, borderLeft: "3px solid var(--yellow)" }}>
+                <strong style={{ color: "var(--yellow)", fontSize: 12, display: "block", marginBottom: 2 }}>{imp.area}</strong> {imp.issue}
+                <div style={{ marginTop: 6, color: "var(--blue-bright)", fontSize: 12 }}>💡 {imp.suggestion}</div>
               </div>)}
             </div>}
-            <p style={{ fontSize: 13, lineHeight: 1.8, color: "var(--text2)" }}>{feedback.feedback}</p>
-            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-              <button className="btn-glow" onClick={next} style={{ ...primaryBtn, flex: 1 }}>{idx + 1 >= questions.length ? "See Results" : "Next →"}</button>
-              <button className="btn-secondary-hover" onClick={onClose} style={{ ...secondaryBtn, flex: 1 }}>End</button>
+            <div style={{ padding: 14, background: "var(--blue-dim)", borderRadius: 12, border: "1px solid rgba(37,99,235,0.2)", marginTop: 8 }}>
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text)", fontWeight: 500 }}>"{feedback.feedback}"</p>
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
+              <button className="btn-glow" onClick={next} style={{ ...primaryBtn, flex: 2 }}>{idx + 1 >= questions.length ? "See Results" : "Next Question →"}</button>
+              <button className="btn-secondary-hover" onClick={redraft} style={{ ...secondaryBtn, flex: 1, minWidth: 120 }}>✍️ Retry Answer</button>
+              <button className="btn-secondary-hover" onClick={onClose} style={{ ...secondaryBtn, flex: 1, background: "transparent" }}>End</button>
             </div>
           </div>}
         </div>}

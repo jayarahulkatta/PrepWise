@@ -20,7 +20,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); -webkit
 `;
 
 export default function AuthPage() {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDomain } = useAuth();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

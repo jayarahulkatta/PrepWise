@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../AuthContext";
-import { Badge, SkeletonCard, Toast, StatCard, ScoreBar } from "../components/ui";
+import { SkeletonCard, Toast, StatCard, ScoreBar } from "../components/ui";
 import QuestionCard from "../components/interview/QuestionCard";
 import MockInterview from "../components/interview/MockInterview";
 import ChatSimulator from "../components/interview/ChatSimulator";

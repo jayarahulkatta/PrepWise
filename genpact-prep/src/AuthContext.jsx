@@ -18,7 +18,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isDomainUser, setIsDomainUser] = useState(localStorage.getItem("domainAuth") === "true");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
@@ -67,7 +66,7 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     localStorage.removeItem("domainAuth");
-    setIsDomainUser(false);
+
     await fbSignOut(auth);
     setUser(null);
     setProfile(null);
@@ -75,7 +74,7 @@ export function AuthProvider({ children }) {
 
   const signInAsDomain = () => {
     localStorage.setItem("domainAuth", "true");
-    setIsDomainUser(true);
+
     setUser({ uid: 'domain-hardcoded' });
     setProfile({ role: 'domain', name: 'Domain Expert', email: 'jayarahul696@gmail.com' });
   };

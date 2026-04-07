@@ -213,7 +213,8 @@ function BookmarksPanel({ bookmarkedQuestions, onClose, onRemove }) {
 
 // ─── MAIN APP ───────────────────────────────────────────────────────────────
 export default function App() {
-  const { user, loading: authLoading, signOut, getToken } = useAuth();
+  const { user, profile, loading: authLoading, signOut, getToken } = useAuth();
+  const isDomain = profile?.role === 'domain' || profile?.role === 'admin';
   const [loaded, setLoaded] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [allQuestions, setAllQuestions] = useState([]);
@@ -379,7 +380,7 @@ export default function App() {
         </div>
         <span style={{marginLeft:16,fontSize:12,color:"var(--text2)",background:"var(--surface)",padding:"6px 14px",borderRadius:10,border:"1px solid transparent",fontWeight:500}}>🏢 Genpact</span>
         <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
-          <button className="btn-secondary-hover" onClick={()=>setShowSubmit(true)} style={headerBtn(false)}>📝 Submit Q</button>
+          {isDomain && <button className="btn-secondary-hover" onClick={()=>setShowSubmit(true)} style={headerBtn(false)}>📝 Submit Q</button>}
           <button className="btn-secondary-hover" onClick={()=>setShowChat(true)} style={headerBtn(false)}>💬 AI Chat</button>
           <button className="btn-secondary-hover" onClick={()=>setShowMock(true)} style={headerBtn(false)}>⏱️ Mock</button>
           <button className="btn-secondary-hover" onClick={()=>setShowBookmarks(v=>!v)} style={headerBtn(showBookmarks)}>🔖 {bookmarks.size}</button>
@@ -445,7 +446,7 @@ export default function App() {
         <div>
           {questions.length===0?<div style={{textAlign:"center",padding:72,color:"var(--muted)",fontSize:14}}>No questions match your filters.</div>:
           <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            {questions.map((q,i)=><div key={q.id} style={{animationDelay:`${i*50}ms`}} className="fadeUp"><QuestionCard q={q} bookmarked={bookmarks.has(q.id)} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} onDelete={handleDelete} showToast={showToast}/></div>)}
+            {questions.map((q,i)=><div key={q.id} style={{animationDelay:`${i*50}ms`}} className="fadeUp"><QuestionCard q={q} bookmarked={bookmarks.has(q.id)} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} onDelete={isDomain ? handleDelete : null} showToast={showToast}/></div>)}
           </div>}
           {totalPages>1&&<div style={{display:"flex",gap:6,justifyContent:"center",marginTop:32,alignItems:"center"}}>
             {page>1&&<button onClick={()=>setPage(p=>p-1)} style={pageBtn(false)}>←</button>}
@@ -459,7 +460,7 @@ export default function App() {
         {/* ─── SIDEBAR ─── */}
         <aside style={{display:"flex",flexDirection:"column",gap:16}}>
           <div className="card-hover" style={sideCard}><h3 style={sideTitle}>Quick Actions</h3>
-            {[{label:"⏱️ Mock Interview",action:()=>setShowMock(true)},{label:"💬 AI Chat",action:()=>setShowChat(true)},{label:"📝 Submit Question",action:()=>setShowSubmit(true)},{label:"🔖 Saved Questions",action:()=>setShowBookmarks(v=>!v)}].map(({label,action})=>
+            {[{label:"⏱️ Mock Interview",action:()=>setShowMock(true)},{label:"💬 AI Chat",action:()=>setShowChat(true)},isDomain && {label:"📝 Submit Question",action:()=>setShowSubmit(true)},{label:"🔖 Saved Questions",action:()=>setShowBookmarks(v=>!v)}].filter(Boolean).map(({label,action})=>
               <button key={label} className="sidebar-btn" onClick={action} style={{width:"100%",marginBottom:10,padding:"10px 16px",borderRadius:11,background:"rgba(255,255,255,0.02)",border:"1px solid var(--border)",color:"var(--text)",fontSize:12,fontFamily:"var(--font)",cursor:"pointer",textAlign:"left",fontWeight:500}}>{label}</button>
             )}
           </div>

@@ -8,6 +8,32 @@ if (!admin.apps.length) {
   });
 }
 
+// Domain user email — auto-assigned domain role
+const DOMAIN_EMAIL = 'jayarahul696@gmail.com';
+
+// Find or create user in MongoDB from Firebase token
+async function findOrCreateUser(decoded) {
+  const email = (decoded.email || '').toLowerCase().trim();
+  const isDomain = email === DOMAIN_EMAIL;
+
+  let user = await User.findOne({ firebaseUid: decoded.uid });
+  if (!user) {
+    user = await User.create({
+      firebaseUid: decoded.uid,
+      email: email,
+      displayName: decoded.name || '',
+      photoURL: decoded.picture || '',
+      role: isDomain ? 'domain' : 'normal',
+      onboardingComplete: false,
+    });
+  } else if (isDomain && user.role !== 'domain') {
+    // Upgrade existing user to domain if email matches
+    user.role = 'domain';
+    await user.save();
+  }
+  return user;
+}
+
 // Optional auth — attaches user if token present, doesn't block
 const optionalAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -15,23 +41,11 @@ const optionalAuth = async (req, res, next) => {
     req.user = null;
     return next();
   }
-
   try {
     const token = authHeader.split('Bearer ')[1];
     const decoded = await admin.auth().verifyIdToken(token);
     req.firebaseUser = decoded;
-
-    // Find or create user in DB
-    let user = await User.findOne({ firebaseUid: decoded.uid });
-    if (!user) {
-      user = await User.create({
-        firebaseUid: decoded.uid,
-        email: decoded.email || '',
-        displayName: decoded.name || '',
-        photoURL: decoded.picture || '',
-      });
-    }
-    req.user = user;
+    req.user = await findOrCreateUser(decoded);
   } catch (err) {
     req.user = null;
   }
@@ -44,22 +58,11 @@ const requireAuth = async (req, res, next) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-
   try {
     const token = authHeader.split('Bearer ')[1];
     const decoded = await admin.auth().verifyIdToken(token);
     req.firebaseUser = decoded;
-
-    let user = await User.findOne({ firebaseUid: decoded.uid });
-    if (!user) {
-      user = await User.create({
-        firebaseUid: decoded.uid,
-        email: decoded.email || '',
-        displayName: decoded.name || '',
-        photoURL: decoded.picture || '',
-      });
-    }
-    req.user = user;
+    req.user = await findOrCreateUser(decoded);
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired token' });
@@ -76,4 +79,14 @@ const requireAdmin = async (req, res, next) => {
   });
 };
 
-module.exports = { optionalAuth, requireAuth, requireAdmin };
+// Domain user auth
+const requireDomain = async (req, res, next) => {
+  await requireAuth(req, res, () => {
+    if (req.user && (req.user.role === 'domain' || req.user.role === 'admin')) {
+      return next();
+    }
+    return res.status(403).json({ error: 'Domain expert access required' });
+  });
+};
+
+module.exports = { optionalAuth, requireAuth, requireAdmin, requireDomain };

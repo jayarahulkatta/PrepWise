@@ -1,57 +1,60 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  updateProfile,
-} from "firebase/auth";
-import { auth, googleProvider } from "./firebase";
+import { createContext, useContext, useEffect, useState } from "react";
+import { auth } from "./firebase";
+import { getIdToken, onAuthStateChanged, signOut as fbSignOut } from "firebase/auth";
+import { apiFetch, API_BASE } from "./utils/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        setUser(fbUser);
+        // Try to load the profile from backend
+        try {
+          const token = await getIdToken(fbUser);
+          const p = await apiFetch(`${API_BASE}/user/profile`, {}, token);
+          setProfile(p);
+        } catch {
+          // New user — profile will be created on first API call
+          setProfile(null);
+        }
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
       setLoading(false);
     });
     return () => unsub();
   }, []);
 
-  const signInWithGoogle = async () => {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
+  const getToken = async () => {
+    if (auth.currentUser) return getIdToken(auth.currentUser);
+    return null;
   };
 
-  const signInWithEmail = async (email, password) => {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    return result.user;
-  };
-
-  const signUpWithEmail = async (email, password, displayName) => {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    if (displayName) {
-      await updateProfile(result.user, { displayName });
-    }
-    return result.user;
+  const refreshProfile = async () => {
+    try {
+      const token = await getToken();
+      if (token) {
+        const p = await apiFetch(`${API_BASE}/user/profile`, {}, token);
+        setProfile(p);
+      }
+    } catch { }
   };
 
   const signOut = async () => {
-    await firebaseSignOut(auth);
-  };
-
-  const getToken = async () => {
-    if (!user) return null;
-    return user.getIdToken();
+    await fbSignOut(auth);
+    setUser(null);
+    setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, getToken }}>
+    <AuthContext.Provider value={{ user, profile, loading, getToken, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

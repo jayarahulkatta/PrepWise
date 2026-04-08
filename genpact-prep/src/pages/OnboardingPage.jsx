@@ -1,12 +1,22 @@
 import { useState } from "react";
-import { useAuth } from "../AuthContext";
+import { useAuth, ROLE_DOMAIN_EXPERT } from "../AuthContext";
 import { apiFetch, API_BASE } from "../utils/api";
 import { EXPERIENCE_LEVELS } from "../utils/constants";
 
 export default function OnboardingPage({ onComplete }) {
-  const { getToken } = useAuth();
-  const [step, setStep] = useState(1);
-  const [role, setRole] = useState("");
+  const { getToken, role } = useAuth();
+
+  // ─── ROLE-AWARE ONBOARDING ──────────────────────────────────────────────
+  // The role is already set from the auth flow (interviewer or domain_expert).
+  // Domain experts skip the role selection step entirely and go straight to 
+  // the domain profile form. Interviewers do the same for their profile.
+  const isDomainExpert = role === ROLE_DOMAIN_EXPERT;
+
+  // If role is set, skip step 1 (role selection) and go directly to step 2
+  const [step, setStep] = useState(role ? 2 : 1);
+  // Map auth role to onboarding role value used by the backend API
+  const [onboardingRole, setOnboardingRole] = useState(isDomainExpert ? "domain" : "normal");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,14 +46,14 @@ export default function OnboardingPage({ onComplete }) {
     setLoading(true); setError("");
     try {
       const token = await getToken();
-      const body = { role };
-      if (role === "normal") {
+      const body = { role: onboardingRole };
+      if (onboardingRole === "normal") {
         body.prepProfile = { targetCompany: "Genpact", targetRole, experienceLevel, interviewDate: interviewDate || null, focusAreas };
       } else {
         body.domainProfile = { company: "Genpact", roleArea: domainRoleArea, yearsExperience, specializations };
       }
       await apiFetch(`${API_BASE}/user/onboarding`, { method: "PUT", body: JSON.stringify(body) }, token);
-      onComplete(role);
+      onComplete(onboardingRole);
     } catch (e) {
       console.error("ONBOARDING API ERROR:", e);
       setError("Failed to save. Please try again.");
@@ -81,35 +91,35 @@ export default function OnboardingPage({ onComplete }) {
           <p style={{ fontSize: 14, color: "var(--text2)" }}>Let's personalize your experience</p>
         </div>
 
-        {/* Step 1: Role Selection */}
+        {/* Step 1: Role Selection — only shown if role was NOT set from auth flow (fallback) */}
         {step === 1 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, textAlign: "center", marginBottom: 8 }}>How will you use PrepWise?</h2>
             <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", marginBottom: 32 }}>This determines your dashboard and features</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div className={`onboarding-card ${role === "normal" ? "selected" : ""}`} onClick={() => setRole("normal")}>
+              <div className={`onboarding-card ${onboardingRole === "normal" ? "selected" : ""}`} onClick={() => setOnboardingRole("normal")}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
                 <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Interview Prep</h3>
                 <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7 }}>I'm preparing for interviews. I want to practice, get feedback, and track my progress.</p>
               </div>
-              <div className={`onboarding-card ${role === "domain" ? "selected" : ""}`} onClick={() => setRole("domain")}>
+              <div className={`onboarding-card ${onboardingRole === "domain" ? "selected" : ""}`} onClick={() => setOnboardingRole("domain")}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🏆</div>
                 <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Domain Expert</h3>
                 <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7 }}>I'm an industry professional. I want to contribute questions and help candidates prepare.</p>
               </div>
             </div>
-            <button className="btn-glow" disabled={!role} onClick={() => setStep(2)} style={{
+            <button className="btn-glow" disabled={!onboardingRole} onClick={() => setStep(2)} style={{
               width: "100%", marginTop: 28, padding: "14px 0", borderRadius: 14, border: "none",
-              background: role ? "linear-gradient(135deg, var(--blue), #2563eb)" : "var(--card)",
-              color: role ? "#fff" : "var(--muted)", fontSize: 14, fontWeight: 600,
-              fontFamily: "var(--font)", cursor: role ? "pointer" : "not-allowed",
-              opacity: role ? 1 : 0.5, boxShadow: role ? "0 4px 20px rgba(59,130,246,0.3)" : "none",
+              background: onboardingRole ? "linear-gradient(135deg, var(--blue), #2563eb)" : "var(--card)",
+              color: onboardingRole ? "#fff" : "var(--muted)", fontSize: 14, fontWeight: 600,
+              fontFamily: "var(--font)", cursor: onboardingRole ? "pointer" : "not-allowed",
+              opacity: onboardingRole ? 1 : 0.5, boxShadow: onboardingRole ? "0 4px 20px rgba(59,130,246,0.3)" : "none",
             }}>Continue →</button>
           </div>
         )}
 
-        {/* Step 2: Profile Details */}
-        {step === 2 && role === "normal" && (
+        {/* Step 2: Profile Details — Interview Prep */}
+        {step === 2 && onboardingRole === "normal" && (
           <div style={{ background: "var(--glass)", border: "1px solid var(--glass-border)", borderRadius: 24, padding: 36, backdropFilter: "blur(24px)" }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Your Interview Target</h2>
             <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 28 }}>We'll personalize your preparation based on this</p>
@@ -139,13 +149,15 @@ export default function OnboardingPage({ onComplete }) {
 
             {error && <p style={{ color: "var(--red)", fontSize: 12, marginBottom: 12 }}>⚠️ {error}</p>}
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setStep(1)} style={{ flex: 1, padding: "13px 0", borderRadius: 14, border: "1px solid var(--border)", background: "var(--card)", color: "var(--text2)", fontSize: 13, fontWeight: 500, fontFamily: "var(--font)", cursor: "pointer" }}>← Back</button>
+              {/* Only show back button if role selection step is available (fallback mode) */}
+              {!role && <button onClick={() => setStep(1)} style={{ flex: 1, padding: "13px 0", borderRadius: 14, border: "1px solid var(--border)", background: "var(--card)", color: "var(--text2)", fontSize: 13, fontWeight: 500, fontFamily: "var(--font)", cursor: "pointer" }}>← Back</button>}
               <button className="btn-glow" onClick={submit} disabled={loading} style={{ flex: 2, padding: "13px 0", borderRadius: 14, border: "none", background: "linear-gradient(135deg, var(--blue), #2563eb)", color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: "var(--font)", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>{loading ? "Saving…" : "Start Preparing →"}</button>
             </div>
           </div>
         )}
 
-        {step === 2 && role === "domain" && (
+        {/* Step 2: Profile Details — Domain Expert */}
+        {step === 2 && onboardingRole === "domain" && (
           <div style={{ background: "var(--glass)", border: "1px solid var(--glass-border)", borderRadius: 24, padding: 36, backdropFilter: "blur(24px)" }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Your Domain Expertise</h2>
             <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 28 }}>Help us understand your background</p>
@@ -169,7 +181,7 @@ export default function OnboardingPage({ onComplete }) {
 
             {error && <p style={{ color: "var(--red)", fontSize: 12, marginBottom: 12 }}>⚠️ {error}</p>}
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setStep(1)} style={{ flex: 1, padding: "13px 0", borderRadius: 14, border: "1px solid var(--border)", background: "var(--card)", color: "var(--text2)", fontSize: 13, fontWeight: 500, fontFamily: "var(--font)", cursor: "pointer" }}>← Back</button>
+              {!role && <button onClick={() => setStep(1)} style={{ flex: 1, padding: "13px 0", borderRadius: 14, border: "1px solid var(--border)", background: "var(--card)", color: "var(--text2)", fontSize: 13, fontWeight: 500, fontFamily: "var(--font)", cursor: "pointer" }}>← Back</button>}
               <button className="btn-glow" onClick={submit} disabled={loading} style={{ flex: 2, padding: "13px 0", borderRadius: 14, border: "none", background: "linear-gradient(135deg, var(--blue), #2563eb)", color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: "var(--font)", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>{loading ? "Saving…" : "Start Contributing →"}</button>
             </div>
           </div>

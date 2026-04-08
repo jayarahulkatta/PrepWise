@@ -1,11 +1,12 @@
-import { AuthProvider, useAuth } from "./AuthContext";
+import { AuthProvider, useAuth, ROLE_DOMAIN_EXPERT } from "./AuthContext";
 import AuthPage from "./AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import NormalDashboard from "./pages/NormalDashboard";
+import DomainDashboard from "./pages/DomainDashboard";
 import "./styles/index.css";
 
 function AppRouter() {
-  const { user, profile, loading, refreshProfile } = useAuth();
+  const { user, profile, loading, role, refreshProfile } = useAuth();
 
   // Loading state
   if (loading) {
@@ -30,11 +31,19 @@ function AppRouter() {
   if (!user) return <AuthPage />;
 
   // Signed in but no onboarding → Onboarding
+  // Pass the current role so onboarding knows which profile form to show
   if (!profile?.onboardingComplete) {
     return <OnboardingPage onComplete={async () => { await refreshProfile(); }} />;
   }
 
-  // All users → same dashboard (role-based features handled inside)
+  // ─── ROLE-BASED DASHBOARD ROUTING ──────────────────────────────────────────
+  // Domain experts → DomainDashboard (question management portal)
+  // Everyone else (interviewers) → NormalDashboard (interview prep features)
+  if (role === ROLE_DOMAIN_EXPERT) {
+    return <DomainDashboard />;
+  }
+
+  // Default: interviewers and any unrecognized role
   return <NormalDashboard />;
 }
 

@@ -8,10 +8,11 @@ import { apiFetch, API_BASE } from "../utils/api";
 import { scoreColor, readinessLabel, daysUntil, SCORE_AXES, QUESTION_TYPES, EXPERIENCE_LEVELS, DIFFICULTIES, formatTimeAgo } from "../utils/constants";
 
 export default function NormalDashboard() {
-  const { user, profile: authProfile, signOut, getToken } = useAuth();
+  const { user, signOut, getToken } = useAuth();
   const [profile, setProfile] = useState(null);
-  const isDomain = (authProfile?.role === 'domain' || authProfile?.role === 'admin');
-  const [view, setView] = useState("dashboard"); // dashboard | practice | mock | chat | history | saved | submit
+  // No isDomain check — this dashboard is exclusively for interview prep users.
+  // Domain experts are routed to DomainDashboard by App.jsx.
+  const [view, setView] = useState("dashboard"); // dashboard | practice | history | saved
   const [loaded, setLoaded] = useState(false);
 
   // Questions
@@ -38,10 +39,7 @@ export default function NormalDashboard() {
   const [showMock, setShowMock] = useState(false);
   const [showChat, setShowChat] = useState(false);
 
-  // Submit form (domain only)
-  const [submitForm, setSubmitForm] = useState({ company: "Genpact", job: "", type: "Technical", diff: "Medium", exp: "Fresher", text: "" });
-  const [submitting, setSubmitting] = useState(false);
-  const updateForm = (k, v) => setSubmitForm(prev => ({ ...prev, [k]: v }));
+  // Domain-only submit form removed — domain experts use DomainDashboard
 
   // History
   const [sessions, setSessions] = useState([]);
@@ -112,37 +110,7 @@ export default function NormalDashboard() {
     try { const token = await getToken(); const p = await apiFetch(`${API_BASE}/user/profile`, {}, token); setProfile(p); } catch { }
   };
 
-  // Delete handler (domain only)
-  const handleDelete = useCallback(async (id) => {
-    if (!window.confirm("Are you sure you want to delete this question?")) return;
-    try {
-      const token = await getToken();
-      await apiFetch(`${API_BASE}/questions/${id}`, { method: "DELETE" }, token);
-      setQuestions(prev => prev.filter(q => q.id !== id));
-      setAllQuestions(prev => prev.filter(q => q.id !== id));
-      setTotal(t => Math.max(0, t - 1));
-      showToast("Question deleted");
-    } catch { showToast("Failed to delete question"); }
-  }, [getToken, showToast]);
-
-  // Submit handler (domain only)
-  const submitQuestion = async (e) => {
-    e.preventDefault();
-    if (!submitForm.text.trim() || !submitForm.job.trim()) return;
-    setSubmitting(true);
-    try {
-      const token = await getToken();
-      await apiFetch(`${API_BASE}/questions/submit`, { method: "POST", body: JSON.stringify(submitForm) }, token);
-      showToast("Question published!");
-      setSubmitForm({ company: "Genpact", job: "", type: "Technical", diff: "Medium", exp: "Fresher", text: "" });
-      // Refresh question list
-      const params = new URLSearchParams({ company, page: 1, limit: 8, sort: sortMode });
-      const data = await apiFetch(`${API_BASE}/questions?${params}`);
-      setQuestions(data.questions); setTotalPages(data.totalPages); setTotal(data.total);
-      apiFetch(`${API_BASE}/questions/all?company=${company}`).then(setAllQuestions).catch(console.error);
-    } catch { showToast("Failed to submit. Try again."); }
-    setSubmitting(false);
-  };
+  // Domain-only delete/submit handlers removed — domain experts use DomainDashboard
 
   const jobs = [...new Set(allQuestions.map(q => q.job))];
   const bookmarkedQs = allQuestions.filter(q => bookmarks.has(q.id));
@@ -157,10 +125,10 @@ export default function NormalDashboard() {
     backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
   };
 
+  // Interview prep only nav — no domain expert items
   const navItems = [
     { key: "dashboard", icon: "📊", label: "Dashboard" },
     { key: "practice", icon: "📝", label: "Practice" },
-    ...(isDomain ? [{ key: "submit", icon: "➕", label: "Submit Q" }] : []),
     { key: "history", icon: "📈", label: "History" },
     { key: "saved", icon: "🔖", label: `Saved (${bookmarks.size})` },
   ];
@@ -197,7 +165,7 @@ export default function NormalDashboard() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.displayName || "User"}</div>
-              <div style={{ fontSize: 10, color: isDomain ? "var(--green)" : "var(--muted)" }}>{isDomain ? "Domain Expert" : "Interview Prep"}</div>
+              <div style={{ fontSize: 10, color: "var(--muted)" }}>Interview Prep</div>
             </div>
           </div>
           <button onClick={signOut} style={{ width: "100%", background: "none", border: "1px solid var(--border)", color: "var(--red)", padding: "7px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500 }}>Sign Out</button>
@@ -313,7 +281,7 @@ export default function NormalDashboard() {
             {!loaded ? [0, 1, 2, 3].map(i => <div key={i} style={{ marginBottom: 16, animation: `fadeUp 0.4s ease ${i * 100}ms both` }}><SkeletonCard /></div>) :
               questions.length === 0 ? <div style={{ textAlign: "center", padding: 72, color: "var(--muted)", fontSize: 14 }}>No questions match your filters.</div> :
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {questions.map((q, i) => <div key={q.id} style={{ animationDelay: `${i * 50}ms` }} className="fadeUp"><QuestionCard q={q} bookmarked={bookmarks.has(q.id)} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} onDelete={isDomain ? handleDelete : undefined} showToast={showToast} userRole={authProfile?.role} /></div>)}
+                  {questions.map((q, i) => <div key={q.id} style={{ animationDelay: `${i * 50}ms` }} className="fadeUp"><QuestionCard q={q} bookmarked={bookmarks.has(q.id)} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} showToast={showToast} userRole="interviewer" /></div>)}
                 </div>}
 
             {/* Pagination */}
@@ -363,53 +331,7 @@ export default function NormalDashboard() {
           </div>
         )}
 
-        {/* SUBMIT VIEW (domain only) */}
-        {isDomain && view === "submit" && (
-          <div className="fadeUp">
-            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.5px", marginBottom: 4 }}>Submit a Question</h1>
-            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 28 }}>As a domain expert, your questions are auto-approved.</p>
-
-            <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 20, padding: 28 }}>
-              <form onSubmit={submitQuestion}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-                  <div>
-                    <label style={{ fontSize: 12, color: "var(--text2)", display: "block", marginBottom: 7, fontWeight: 500 }}>Job Role</label>
-                    <input value={submitForm.job} onChange={e => updateForm("job", e.target.value)} placeholder="e.g. Java Developer" required style={{ ...filterSS, backgroundImage: "none", width: "100%" }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: "var(--text2)", display: "block", marginBottom: 7, fontWeight: 500 }}>Type</label>
-                    <select value={submitForm.type} onChange={e => updateForm("type", e.target.value)} style={{ ...filterSS, width: "100%" }}>
-                      {QUESTION_TYPES.map(t => <option key={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: "var(--text2)", display: "block", marginBottom: 7, fontWeight: 500 }}>Difficulty</label>
-                    <select value={submitForm.diff} onChange={e => updateForm("diff", e.target.value)} style={{ ...filterSS, width: "100%" }}>
-                      {DIFFICULTIES.map(d => <option key={d}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: "var(--text2)", display: "block", marginBottom: 7, fontWeight: 500 }}>Experience Level</label>
-                    <select value={submitForm.exp} onChange={e => updateForm("exp", e.target.value)} style={{ ...filterSS, width: "100%" }}>
-                      {EXPERIENCE_LEVELS.map(x => <option key={x}>{x}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{ fontSize: 12, color: "var(--text2)", display: "block", marginBottom: 7, fontWeight: 500 }}>Question</label>
-                  <textarea value={submitForm.text} onChange={e => updateForm("text", e.target.value)} placeholder="Type the interview question here…" required rows={4} style={{ ...filterSS, backgroundImage: "none", width: "100%", resize: "vertical", lineHeight: 1.7 }} />
-                </div>
-                <button className="btn-glow" type="submit" disabled={submitting} style={{
-                  width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
-                  background: "linear-gradient(135deg, var(--blue), #2563eb)",
-                  color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: "var(--font)",
-                  cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1,
-                  boxShadow: "0 4px 20px rgba(59,130,246,0.3)",
-                }}>{submitting ? "Publishing…" : "Publish Question"}</button>
-              </form>
-            </div>
-          </div>
-        )}
+        {/* Domain-only submit view removed — domain experts use DomainDashboard */}
 
         {/* SAVED VIEW */}
         {view === "saved" && (
@@ -418,7 +340,7 @@ export default function NormalDashboard() {
             <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 28 }}>{bookmarks.size} bookmarked questions</p>
             {bookmarkedQs.length === 0 ? <div style={{ textAlign: "center", padding: 60, color: "var(--muted)" }}><div style={{ fontSize: 48, marginBottom: 12 }}>🔖</div><p>No bookmarks yet. Click 🔖 on any question to save it.</p></div> :
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {bookmarkedQs.map((q, i) => <div key={q.id} className="fadeUp" style={{ animationDelay: `${i * 60}ms` }}><QuestionCard q={q} bookmarked={true} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} onDelete={isDomain ? handleDelete : undefined} showToast={showToast} userRole={authProfile?.role} /></div>)}
+                {bookmarkedQs.map((q, i) => <div key={q.id} className="fadeUp" style={{ animationDelay: `${i * 60}ms` }}><QuestionCard q={q} bookmarked={true} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} showToast={showToast} userRole="interviewer" /></div>)}
               </div>}
           </div>
         )}

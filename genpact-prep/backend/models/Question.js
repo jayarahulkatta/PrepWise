@@ -10,6 +10,8 @@ const questionSchema = new mongoose.Schema({
   date: { type: String, required: true },
   status: { type: String, default: 'approved', enum: ['approved', 'pending', 'rejected'] },
   submittedBy: { type: String, default: null }, // Firebase UID
+  attempts: { type: Number, default: 0 },
+  avgScore: { type: Number, default: 0 },
   upvotes: { type: Number, default: 0 },
   downvotes: { type: Number, default: 0 },
   votedBy: {

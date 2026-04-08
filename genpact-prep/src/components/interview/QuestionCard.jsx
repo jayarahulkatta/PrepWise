@@ -12,7 +12,7 @@ const filterSS = {
   backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
 };
 
-export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, showToast, userRole }) {
+export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole }) {
   const [answer, setAnswer] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [tone, setTone] = useState("confident");
@@ -55,7 +55,7 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
   };
 
   const isTyping = generating || (displayedAnswer && displayedAnswer.length < (answer?.length || 0));
-  const canDelete = userRole === 'admin' || userRole === 'domain';
+  const canDelete = userRole === 'admin' || userRole === 'domain' || userRole === 'domain_expert';
 
   const iconBtn = (active, activeColor, activeBg) => ({
     width: 34, height: 34, borderRadius: 10,
@@ -68,11 +68,24 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
 
   return (
     <div className="card-hover" style={{
-      background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 24,
-      borderLeft: showAnswer ? "3px solid var(--green)" : "3px solid transparent",
+      background: "var(--card)", border: selected ? "1px solid var(--blue)" : "1px solid var(--border)", borderRadius: 16, padding: 24,
+      borderLeft: showAnswer ? "3px solid var(--green)" : selected ? "3px solid var(--blue)" : "3px solid transparent",
+      boxShadow: selected ? "0 4px 20px rgba(59,130,246,0.15)" : "none",
       transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+      position: "relative",
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
+      {selectable && (
+        <div style={{ position: "absolute", top: 20, right: 20, zIndex: 2 }}>
+          <input 
+            type="checkbox" 
+            checked={selected} 
+            onChange={() => onSelect(q.id)} 
+            style={{ width: 18, height: 18, cursor: "pointer", accentColor: "var(--blue)" }}
+            title="Select question"
+          />
+        </div>
+      )}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 14, paddingRight: selectable ? 24 : 0 }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <Badge label={q.type} cls={`tag-${q.type}`} />
           <Badge label={q.diff} cls={`diff-${q.diff}`} />
@@ -81,7 +94,19 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
         </div>
         <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)", flexShrink: 0, opacity: 0.7 }}>{q.date}</span>
       </div>
-      <p style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, color: "var(--text)", marginBottom: 20, letterSpacing: "-0.2px" }}>{q.text}</p>
+      <p style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, color: "var(--text)", marginBottom: 16, letterSpacing: "-0.2px" }}>{q.text}</p>
+      
+      {/* Usage Analytics Strip */}
+      <div style={{ display: "flex", gap: 16, marginBottom: 20, padding: "8px 12px", background: "var(--card-highest)", borderRadius: 10, width: "fit-content" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
+          <span style={{ fontSize: 14 }}>🎯</span> {q.avgScore ? `${q.avgScore}% Avg Score` : "Unrated"}
+        </div>
+        <div style={{ width: 1, background: "var(--border)" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
+          <span style={{ fontSize: 14 }}>👥</span> {q.attempts ? `${q.attempts} Attempts` : "0 Attempts"}
+        </div>
+      </div>
+
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <select value={tone} onChange={e => setTone(e.target.value)} style={{ ...filterSS, padding: "7px 30px 7px 10px", fontSize: 12, width: "auto" }}>
           {Object.entries(TONES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -95,8 +120,10 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
         }}>
           {generating ? <><Spinner /> Generating…</> : <>⚡ {answer ? "Regenerate" : "Generate Answer"}</>}
         </button>
+        {canDelete && onEdit && <button onClick={() => onEdit(q)} title="Edit" style={iconBtn(false, "var(--blue)", "var(--blue-dim)")}>✏️</button>}
+        {canDelete && onDuplicate && <button onClick={() => onDuplicate(q)} title="Duplicate" style={iconBtn(false, "var(--green)", "var(--green-dim)")}>📄</button>}
         {canDelete && onDelete && <button onClick={() => onDelete(q.id)} title="Delete" style={iconBtn(false, "var(--red)", "var(--red-dim)")}>🗑️</button>}
-        <button onClick={() => onBookmark(q.id)} title="Bookmark" style={iconBtn(bookmarked, "var(--red)", "var(--red-dim)")}>🔖</button>
+        {!selectable && <button onClick={() => onBookmark(q.id)} title="Bookmark" style={iconBtn(bookmarked, "var(--red)", "var(--red-dim)")}>🔖</button>}
         <button onClick={() => { navigator.clipboard.writeText(q.text); showToast("Question copied!"); }} title="Copy" style={iconBtn(false, "var(--text2)", "transparent")}>📋</button>
         <button onClick={() => onLike(q.id)} style={{
           display: "flex", alignItems: "center", gap: 5, marginLeft: "auto",

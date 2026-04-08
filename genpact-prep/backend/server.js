@@ -92,9 +92,10 @@ app.get('/api/questions', optionalAuth, async (req, res) => {
       ];
     }
 
-    const sortOption = sort === 'recent'
-      ? { createdAt: -1 }
-      : { upvotes: -1, createdAt: -1 };
+    let sortOption = { upvotes: -1, createdAt: -1 };
+    if (sort === 'recent') sortOption = { createdAt: -1 };
+    else if (sort === 'hardest') sortOption = { avgScore: 1, attempts: -1 };
+    else if (sort === 'easiest') sortOption = { avgScore: -1, attempts: -1 };
 
     const total = await Question.countDocuments(filter);
     const questions = await Question.find(filter)
@@ -114,6 +115,8 @@ app.get('/api/questions', optionalAuth, async (req, res) => {
       date: q.date,
       upvotes: q.upvotes || 0,
       downvotes: q.downvotes || 0,
+      attempts: q.attempts || 0,
+      avgScore: q.avgScore || 0,
       submittedBy: q.submittedBy || null,
     }));
 
@@ -147,6 +150,8 @@ app.get('/api/questions/all', async (req, res) => {
       text: q.text,
       date: q.date,
       upvotes: q.upvotes || 0,
+      attempts: q.attempts || 0,
+      avgScore: q.avgScore || 0,
     }));
     res.json(mapped);
   } catch (err) {
@@ -190,6 +195,22 @@ app.post('/api/questions/submit', requireDomain, async (req, res) => {
   }
 });
 
+// Edit a question (domain users only)
+app.put('/api/questions/:id', requireDomain, async (req, res) => {
+  try {
+    const { job, type, diff, exp, text } = req.body;
+    const question = await Question.findByIdAndUpdate(
+      req.params.id,
+      { job, type, diff, exp, text },
+      { new: true }
+    );
+    if (!question) return res.status(404).json({ error: 'Question not found' });
+    res.json({ message: 'Question updated successfully', question });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update question' });
+  }
+});
+
 // Delete a question (domain users only)
 app.delete('/api/questions/:id', requireDomain, async (req, res) => {
   try {
@@ -198,6 +219,18 @@ app.delete('/api/questions/:id', requireDomain, async (req, res) => {
     res.json({ message: 'Question deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete question' });
+  }
+});
+
+// Bulk delete questions (domain users only)
+app.post('/api/questions/bulk-delete', requireDomain, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid payload' });
+    await Question.deleteMany({ _id: { $in: ids } });
+    res.json({ message: `${ids.length} questions deleted successfully` });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to bulk delete' });
   }
 });
 

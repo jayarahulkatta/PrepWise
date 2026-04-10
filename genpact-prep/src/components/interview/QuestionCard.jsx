@@ -1,21 +1,18 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useContext } from "react";
 import { Badge, Spinner, TypingDots } from "../ui";
 import { callAI } from "../../utils/api";
-import { TONES } from "../../utils/constants";
-
-const filterSS = {
-  background: "var(--card-highest)", border: "1px solid transparent",
-  color: "var(--text)", padding: "9px 30px 9px 14px", borderRadius: 12,
-  fontSize: 13, fontFamily: "var(--font)", cursor: "pointer",
-  outline: "none", appearance: "none", transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-  backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
-};
+import { AuthContext } from "../../AuthContext";
+import ToneSelector from "./ToneSelector";
+import RatingBadge from "./RatingBadge";
+import AttemptsCounter from "./AttemptsCounter";
 
 export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole }) {
+  const { role } = useContext(AuthContext);
+  const isExpert = role === "domain_expert";
+
   const [answer, setAnswer] = useState(null);
   const [generating, setGenerating] = useState(false);
-  const [tone, setTone] = useState("confident");
+  const [selectedTone, setSelectedTone] = useState("humble");
   const [showAnswer, setShowAnswer] = useState(false);
   const [ttsPlaying, setTtsPlaying] = useState(false);
   const [rating, setRating] = useState(null);
@@ -23,6 +20,13 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
   const [feedbackText, setFeedbackText] = useState("");
   const [displayedAnswer, setDisplayedAnswer] = useState("");
   const typewriterRef = useRef(null);
+
+  const [expertRating, setExpertRating] = useState(
+    localStorage.getItem(`prepwise_expert_rating_${q.id}`) || "Unrated"
+  );
+  const [attempts, setAttempts] = useState(
+    parseInt(localStorage.getItem(`prepwise_expert_attempts_${q.id}`)) || 0
+  );
 
   const typewrite = useCallback((text) => {
     if (typewriterRef.current) clearInterval(typewriterRef.current);
@@ -35,12 +39,33 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
 
   const generate = async (feedback = null) => {
     if (generating) return;
+
+    if (isExpert && !feedback) {
+      const newCount = attempts + 1;
+      setAttempts(newCount);
+      localStorage.setItem(`prepwise_expert_attempts_${q.id}`, newCount);
+    }
+
     setGenerating(true); setShowAnswer(true); setDisplayedAnswer(""); setRating(null); setShowFeedback(false);
     const feedbackNote = feedback ? `\n\nUser feedback: "${feedback}". Address this specifically.` : "";
     const company = q.company || "Genpact";
-    const prompt = `You're a job candidate being interviewed at ${company}. Answer this interview question in first person, naturally.\n\nQuestion: "${q.text}"\nRole: ${q.job}\nType: ${q.type}\n\nRules:\n- Write as someone would SPEAK — conversational\n- Use natural transitions\n- First person throughout\n- No bullet points, no headers, no markdown\n- 150–220 words, conversational but substantive\n- End with a confident closer${feedbackNote}\n\nWrite the answer directly.`;
+    
+    const toneInstructions = {
+      humble: "Answer in a humble, self-aware tone. Acknowledge what you know and what you are still learning. Be honest about limitations.",
+      confident: "Answer in a confident, assertive tone. State facts directly. No hedging language. Show command of the subject.",
+      story: "Answer using a real-world story or scenario to illustrate the concept. Start with a brief anecdote, then explain the technical concept through it.",
+      concise: "Answer in the most concise way possible. Maximum 3-4 sentences. No padding, no repetition. Every word must earn its place.",
+      technical: "Answer with full technical depth. Include code snippets, proper terminology, edge cases, and implementation details.",
+    };
+
+    const fullPrompt = `You are an expert answering an interview question for a preparation platform.
+Tone instruction: ${toneInstructions[selectedTone]}
+Question: ${q.text}
+Role context: ${q.job} — ${q.diff} level
+Generate a high-quality answer following the tone instruction exactly.${feedbackNote}`;
+
     try {
-      const text = await callAI([{ role: "user", content: prompt }], "generate", { tone, questionType: q.type, role: q.job, company });
+      const text = await callAI([{ role: "user", content: fullPrompt }], "generate", { tone: selectedTone, questionType: q.type, role: q.job, company });
       setAnswer(text); typewrite(text);
     } catch { setDisplayedAnswer("⚠️ Could not connect to AI. Try again."); }
     setGenerating(false);
@@ -96,21 +121,17 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
       </div>
       <p style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, color: "var(--text)", marginBottom: 16, letterSpacing: "-0.2px" }}>{q.text}</p>
       
-      {/* Usage Analytics Strip */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 20, padding: "8px 12px", background: "var(--card-highest)", borderRadius: 10, width: "fit-content" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
-          <span style={{ fontSize: 14 }}>🎯</span> {q.avgScore ? `${q.avgScore}% Avg Score` : "Unrated"}
+      {isExpert && (
+        <div style={{ display: "flex", gap: 16, marginBottom: 20, padding: "8px 12px", background: "var(--card-highest)", borderRadius: 10, width: "fit-content" }}>
+          {/* DOMAIN EXPERT ONLY — hidden in student portal */}
+          <RatingBadge rating={expertRating} onRate={setExpertRating} questionId={q.id} />
+          <div style={{ width: 1, background: "var(--border)" }} />
+          <AttemptsCounter count={attempts} label={attempts === 1 ? "1 Attempt" : `${attempts} Attempts`} />
         </div>
-        <div style={{ width: 1, background: "var(--border)" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
-          <span style={{ fontSize: 14 }}>👥</span> {q.attempts ? `${q.attempts} Attempts` : "0 Attempts"}
-        </div>
-      </div>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <select value={tone} onChange={e => setTone(e.target.value)} style={{ ...filterSS, padding: "7px 30px 7px 10px", fontSize: 12, width: "auto" }}>
-          {Object.entries(TONES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
+        <ToneSelector selectedTone={selectedTone} onToneChange={setSelectedTone} />
         <button className="btn-glow" onClick={() => generate()} disabled={generating} style={{
           display: "flex", alignItems: "center", gap: 7, padding: "8px 18px", borderRadius: 10,
           background: "linear-gradient(135deg,#1e3a6e,#162d5a)",
@@ -145,7 +166,9 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
                 animation: generating ? "pulse 1s infinite" : "none",
                 boxShadow: generating ? "0 0 8px var(--green)" : "none",
               }} />
-              AI Answer{isTyping && !generating && <TypingDots />}
+              AI Answer
+              {!generating && <span style={{ marginLeft: 8, background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: 4, color: "var(--green)", textTransform: "capitalize", fontSize: 11 }}>{selectedTone} answer</span>}
+              {isTyping && !generating && <TypingDots />}
             </div>
             {answer && <div style={{ display: "flex", gap: 6 }}>
               <button className="btn-secondary-hover" onClick={handleTTS} style={{ background: ttsPlaying ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${ttsPlaying ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: ttsPlaying ? "var(--green)" : "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>🔊 {ttsPlaying ? "Stop" : "Listen"}</button>

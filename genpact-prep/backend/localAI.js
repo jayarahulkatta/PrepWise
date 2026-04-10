@@ -113,7 +113,7 @@ function isRelevantInterviewQuestion(text) {
 
 // ─── MAIN GENERATOR (CACHE → GEMINI → GROQ → LOCAL) ────────────────────────
 async function generateAnswer(questionText, type = 'Technical', tone = 'confident', role = '', company = 'Genpact') {
-  const extractedQuestion = extractQuestionText(questionText);
+  let extractedQuestion = extractQuestionText(questionText);
 
   // TOKEN OPTIMIZATION: Block random/irrelevant questions locally.
   if (!isRelevantInterviewQuestion(extractedQuestion)) {
@@ -135,7 +135,7 @@ async function generateAnswer(questionText, type = 'Technical', tone = 'confiden
 
   const toneGuide = TONE_GUIDES[tone] || TONE_GUIDES.confident;
 
-  const systemPrompt = `You are an expert interviewer and senior engineer at ${company}.
+  let systemPrompt = `You are an expert interviewer and senior engineer at ${company}.
 Your task is to provide an ideal, highly compelling answer to the following interview question for a ${role || 'technical'} candidate.
 Provide a clear, detailed, and technically accurate answer.
 The question type is: ${type}.
@@ -144,7 +144,14 @@ If it is a behavioral question, structure your answer using the STAR (Situation,
 Do NOT use markdown formatting like ** or ## in your answer. Use plain text only.
 Write as someone would SPEAK — conversational, 150-220 words.`;
 
-  const fullGeminiPrompt = `${systemPrompt}\n\nQuestion: ${extractedQuestion}`;
+  let fullGeminiPrompt = `${systemPrompt}\n\nQuestion: ${extractedQuestion}`;
+
+  // If the frontend already built the exact new prompt format, use it directly:
+  if (questionText.includes("Tone instruction:")) {
+    systemPrompt = "You are an expert answering an interview question for a preparation platform.";
+    fullGeminiPrompt = questionText;
+    extractedQuestion = questionText; // for Groq
+  }
 
   // Try Gemini
   try {

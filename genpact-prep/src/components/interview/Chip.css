@@ -1,0 +1,105 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.18s ease, background 0.18s, color 0.18s, border-color 0.18s;
+  outline: none;
+}
+
+.chip:active {
+  transform: translateY(0px) !important;
+}
+
+.chip-neutral {
+  background: #1e1e30;
+  color: #aaa;
+  border: 1px solid #2e2e44;
+}
+
+.chip-neutral:hover {
+  transform: translateY(-3px);
+  background: #25253a;
+  color: #d4d4ff;
+  border-color: #4040aa;
+}
+
+.chip-primary {
+  background: #3b5bdb;
+  color: #fff;
+  border: none;
+}
+
+.chip-primary:hover {
+  transform: translateY(-3px);
+  background: #4c6ef5;
+}
+
+.stat-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #161624;
+  color: #555;
+  border: 1px solid #1e1e30;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.chip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Tone dropdown styles */
+.tone-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tone-dropdown-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  background: #1a1a2e;
+  border: 1px solid #2e2e44;
+  border-radius: 12px;
+  min-width: 160px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.tone-dropdown-item {
+  font-size: 13px;
+  color: #aaa;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tone-dropdown-item:hover {
+  background: #25253a;
+  color: #d4d4ff;
+}
+
+.tone-dropdown-item.selected {
+  color: #a5b4fc;
+}

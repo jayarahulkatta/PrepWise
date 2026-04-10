@@ -2,9 +2,9 @@ import { useState, useRef, useCallback } from "react";
 import { Badge, Spinner, TypingDots } from "../ui";
 import { callAI } from "../../utils/api";
 import { useAuth } from "../../AuthContext";
-import ToneSelector from "./ToneSelector";
-import RatingBadge from "./RatingBadge";
-import AttemptsCounter from "./AttemptsCounter";
+import Chip from "./Chip";
+import ToneChip from "./ToneChip";
+import StatPill from "./StatPill";
 
 export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole }) {
   const { role } = useAuth();
@@ -82,15 +82,6 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
   const isTyping = generating || (displayedAnswer && displayedAnswer.length < (answer?.length || 0));
   const canDelete = userRole === 'admin' || userRole === 'domain' || userRole === 'domain_expert';
 
-  const iconBtn = (active, activeColor, activeBg) => ({
-    width: 34, height: 34, borderRadius: 10,
-    background: active ? activeBg : "rgba(255,255,255,0.03)",
-    border: `1px solid ${active ? activeColor : "var(--border)"}`,
-    color: active ? activeColor : "var(--muted)",
-    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 14, transition: "all 0.2s ease",
-  });
-
   return (
     <div className="card-hover" style={{
       background: "var(--card)", border: selected ? "1px solid var(--blue)" : "1px solid var(--border)", borderRadius: 16, padding: 24,
@@ -121,42 +112,81 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
       </div>
       <p style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.7, color: "var(--text)", marginBottom: 16, letterSpacing: "-0.2px" }}>{q.text}</p>
       
+      {/* DOMAIN EXPERT ONLY — hidden in student portal */}
       {isExpert && (
-        <div style={{ display: "flex", gap: 16, marginBottom: 20, padding: "8px 12px", background: "var(--card-highest)", borderRadius: 10, width: "fit-content" }}>
-          {/* DOMAIN EXPERT ONLY — hidden in student portal */}
-          <RatingBadge rating={expertRating} onRate={setExpertRating} questionId={q.id} />
-          <div style={{ width: 1, background: "var(--border)" }} />
-          <AttemptsCounter count={attempts} label={attempts === 1 ? "1 Attempt" : `${attempts} Attempts`} />
+        <div className="stat-row">
+          <StatPill rating={expertRating} onRate={setExpertRating} questionId={q.id} />
+          <span className="stat-pill">{attempts === 1 ? "1 Attempt" : `${attempts} Attempts`}</span>
         </div>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <ToneSelector selectedTone={selectedTone} onToneChange={setSelectedTone} />
-        <button className="btn-glow" onClick={() => generate()} disabled={generating} style={{
-          display: "flex", alignItems: "center", gap: 7, padding: "8px 18px", borderRadius: 10,
-          background: "linear-gradient(135deg,#1e3a6e,#162d5a)",
-          border: "1px solid rgba(59,130,246,0.35)", color: "#60a5fa",
-          fontSize: 12, fontWeight: 600, fontFamily: "var(--font)",
-          cursor: generating ? "not-allowed" : "pointer", opacity: generating ? 0.7 : 1,
-        }}>
-          {generating ? <><Spinner /> Generating…</> : <>⚡ {answer ? "Regenerate" : "Generate Answer"}</>}
+      {/* Action chips row — visible in BOTH portals */}
+      <div className="chip-row">
+        <ToneChip selectedTone={selectedTone} onToneChange={setSelectedTone} />
+        
+        <button className="chip chip-primary" onClick={() => generate()} disabled={generating}>
+          {!generating ? (
+            <>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
+                <path d="M3 8h10M8 3l5 5-5 5" strokeLinecap="round"/>
+              </svg>
+              Generate answer
+            </>
+          ) : (
+            <><Spinner /> Generating…</>
+          )}
         </button>
-        {canDelete && onEdit && <button onClick={() => onEdit(q)} title="Edit" style={iconBtn(false, "var(--blue)", "var(--blue-dim)")}>✏️</button>}
-        {canDelete && onDuplicate && <button onClick={() => onDuplicate(q)} title="Duplicate" style={iconBtn(false, "var(--green)", "var(--green-dim)")}>📄</button>}
-        {canDelete && onDelete && <button onClick={() => onDelete(q.id)} title="Delete" style={iconBtn(false, "var(--red)", "var(--red-dim)")}>🗑️</button>}
-        {!selectable && <button onClick={() => onBookmark(q.id)} title="Bookmark" style={iconBtn(bookmarked, "var(--red)", "var(--red-dim)")}>🔖</button>}
-        <button onClick={() => { navigator.clipboard.writeText(q.text); showToast("Question copied!"); }} title="Copy" style={iconBtn(false, "var(--text2)", "transparent")}>📋</button>
-        <button onClick={() => onLike(q.id)} style={{
-          display: "flex", alignItems: "center", gap: 5, marginLeft: "auto",
-          background: liked ? "var(--blue-dim)" : "transparent",
-          border: `1px solid ${liked ? "rgba(59,130,246,0.3)" : "transparent"}`,
-          cursor: "pointer", color: liked ? "var(--blue)" : "var(--muted)",
-          fontSize: 12, fontWeight: 500, fontFamily: "var(--font)",
-          padding: "5px 10px", borderRadius: 8, transition: "all 0.2s",
-        }}>
-          👍 {q.upvotes || 0}
-        </button>
+
+        {canDelete && onEdit && (
+          <Chip variant="neutral" iconOnly title="Edit" onClick={() => onEdit(q)}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
+              <path d="M11 2l3 3-8 8H3v-3l8-8z"/>
+            </svg>
+          </Chip>
+        )}
+
+        <Chip variant="neutral" iconOnly title="Copy" onClick={() => { navigator.clipboard.writeText(q.text); showToast("Question copied!"); }}>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
+            <rect x="5" y="5" width="8" height="9" rx="1.5"/>
+            <path d="M3 3h6v2"/>
+          </svg>
+        </Chip>
+
+        {canDelete && onDelete && (
+          <Chip variant="neutral" iconOnly title="Delete" onClick={() => onDelete(q.id)}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
+              <path d="M3 4h10M6 4V3h4v1M5 4l1 9h4l1-9"/>
+            </svg>
+          </Chip>
+        )}
+
+        {canDelete && onDuplicate && (
+          <Chip variant="neutral" iconOnly title="Details/Duplicate" onClick={() => onDuplicate(q)}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
+              <rect x="3" y="2" width="10" height="12" rx="1.5"/>
+              <path d="M6 6h4M6 9h4M6 12h2"/>
+            </svg>
+          </Chip>
+        )}
+
+        {!selectable && (
+          <Chip variant="neutral" iconOnly title="Bookmark" onClick={() => onBookmark(q.id)}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14" style={{ color: bookmarked ? "var(--red)" : "inherit" }}>
+              <path d="M3 2v13l5-3 5 3V2z"/>
+            </svg>
+          </Chip>
+        )}
+
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
+          <Chip variant="neutral" title="Like" onClick={() => onLike(q.id)} style={liked ? { color: "var(--blue)", borderColor: "var(--blue)", background: "var(--blue-dim)" } : {}}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
+              <path d="M6 7l2-5 1 1v3h4l-1 6H5V7H3V7h3z"/>
+            </svg>
+            {q.upvotes || 0}
+          </Chip>
+        </div>
       </div>
+
       {showAnswer && (
         <div className="fadeIn" style={{ marginTop: 18, borderTop: "1px solid var(--border)", paddingTop: 18 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -171,8 +201,16 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
               {isTyping && !generating && <TypingDots />}
             </div>
             {answer && <div style={{ display: "flex", gap: 6 }}>
-              <button className="btn-secondary-hover" onClick={handleTTS} style={{ background: ttsPlaying ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${ttsPlaying ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: ttsPlaying ? "var(--green)" : "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>🔊 {ttsPlaying ? "Stop" : "Listen"}</button>
-              <button className="btn-secondary-hover" onClick={() => { navigator.clipboard.writeText(answer); showToast("Copied!"); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>📋 Copy</button>
+              <button className="btn-secondary-hover" onClick={handleTTS} style={{ background: ttsPlaying ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${ttsPlaying ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: ttsPlaying ? "var(--green)" : "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>
+                {ttsPlaying ? "Stop" : "Listen"}
+              </button>
+              <button className="btn-secondary-hover" onClick={() => { navigator.clipboard.writeText(answer); showToast("Copied!"); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s", display: "flex", alignItems: "center", gap: "4px" }}>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="12" height="12">
+                  <rect x="5" y="5" width="8" height="9" rx="1.5"/>
+                  <path d="M3 3h6v2"/>
+                </svg>
+                Copy
+              </button>
             </div>}
           </div>
           {generating && !displayedAnswer ? <div style={{ color: "var(--muted)", fontSize: 13, padding: "8px 0" }}><TypingDots /></div> :
@@ -182,11 +220,18 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
           {answer && !generating && (
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, color: "var(--muted)" }}>Helpful?</span>
-              <button onClick={() => { setRating("good"); setShowFeedback(false); showToast("Thanks!"); }} style={{ background: rating === "good" ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${rating === "good" ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: rating === "good" ? "var(--green)" : "var(--text2)", padding: "5px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>👍 Yes</button>
-              <button onClick={() => { setRating("bad"); setShowFeedback(true); }} style={{ background: rating === "bad" ? "var(--red-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${rating === "bad" ? "rgba(239,68,68,0.3)" : "var(--border)"}`, color: rating === "bad" ? "var(--red)" : "var(--text2)", padding: "5px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>👎 Improve</button>
+              <button onClick={() => { setRating("good"); setShowFeedback(false); showToast("Thanks!"); }} style={{ background: rating === "good" ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${rating === "good" ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: rating === "good" ? "var(--green)" : "var(--text2)", padding: "5px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s", display: "flex", alignItems: "center", gap: "4px" }}>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="12" height="12">
+                  <path d="M6 7l2-5 1 1v3h4l-1 6H5V7H3V7h3z"/>
+                </svg>
+                Yes
+              </button>
+              <button onClick={() => { setRating("bad"); setShowFeedback(true); }} style={{ background: rating === "bad" ? "var(--red-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${rating === "bad" ? "rgba(239,68,68,0.3)" : "var(--border)"}`, color: rating === "bad" ? "var(--red)" : "var(--text2)", padding: "5px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>
+                Improve
+              </button>
               {showFeedback && <>
                 <input value={feedbackText} onChange={e => setFeedbackText(e.target.value)} placeholder="How to improve…" style={{ flex: 1, minWidth: 140, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text)", padding: "6px 12px", borderRadius: 8, fontSize: 11, fontFamily: "var(--font)", outline: "none", transition: "border-color 0.2s" }} />
-                <button className="btn-glow" onClick={() => generate(feedbackText)} style={{ background: "var(--red)", border: "none", color: "#fff", padding: "6px 14px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}>Regenerate</button>
+                <button className="chip chip-primary" onClick={() => generate(feedbackText)} style={{ padding: "6px 14px", fontSize: 11 }}>Regenerate</button>
               </>}
             </div>
           )}

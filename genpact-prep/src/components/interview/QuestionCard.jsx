@@ -1,13 +1,13 @@
-import { useState, useRef, useCallback, useContext } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Badge, Spinner, TypingDots } from "../ui";
 import { callAI } from "../../utils/api";
-import { AuthContext } from "../../AuthContext";
+import { useAuth } from "../../AuthContext";
 import ToneSelector from "./ToneSelector";
 import RatingBadge from "./RatingBadge";
 import AttemptsCounter from "./AttemptsCounter";
 
 export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole }) {
-  const { role } = useContext(AuthContext);
+  const { role } = useAuth();
   const isExpert = role === "domain_expert";
 
   const [answer, setAnswer] = useState(null);

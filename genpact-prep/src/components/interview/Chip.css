@@ -12,6 +12,10 @@
   outline: none;
 }
 
+/* Gentle lift animation — apply to ALL chips */
+.chip:hover {
+  transform: translateY(-3px);
+}
 .chip:active {
   transform: translateY(0px) !important;
 }
@@ -23,7 +27,6 @@
 }
 
 .chip-neutral:hover {
-  transform: translateY(-3px);
   background: #25253a;
   color: #d4d4ff;
   border-color: #4040aa;
@@ -36,16 +39,10 @@
 }
 
 .chip-primary:hover {
-  transform: translateY(-3px);
   background: #4c6ef5;
 }
 
-.stat-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
+/* Stat display pills — read-only */
 .stat-pill {
   display: inline-flex;
   align-items: center;
@@ -53,53 +50,52 @@
   padding: 4px 12px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 600;
   background: #161624;
   color: #555;
   border: 1px solid #1e1e30;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
   user-select: none;
-  transition: all 0.2s ease;
-}
-
-.chip-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 /* Tone dropdown styles */
 .tone-dropdown-container {
-  position: relative;
   display: inline-block;
 }
 
-.tone-dropdown-list {
+.tone-dropdown {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  z-index: 50;
   background: #1a1a2e;
   border: 1px solid #2e2e44;
   border-radius: 12px;
+  z-index: 50;
   min-width: 160px;
+  padding: 6px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.tone-dropdown-item {
+.tone-option {
+  padding: 8px 14px;
   font-size: 13px;
   color: #aaa;
-  padding: 9px 14px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 
-.tone-dropdown-item:hover {
+.tone-option:hover {
   background: #25253a;
   color: #d4d4ff;
 }
 
-.tone-dropdown-item.selected {
+.tone-option-active {
+  background: #1e1e40;
   color: #a5b4fc;
+}
+
+.chip-active {
+  border-color: #4040aa;
+  color: #d4d4ff;
 }

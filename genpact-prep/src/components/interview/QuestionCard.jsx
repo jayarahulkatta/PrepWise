@@ -12,7 +12,7 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
 
   const [answer, setAnswer] = useState(null);
   const [generating, setGenerating] = useState(false);
-  const [selectedTone, setSelectedTone] = useState("humble");
+  const [selectedTone, setSelectedTone] = useState("Humble");
   const [showAnswer, setShowAnswer] = useState(false);
   const [ttsPlaying, setTtsPlaying] = useState(false);
   const [rating, setRating] = useState(null);
@@ -27,6 +27,7 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
   const [attempts, setAttempts] = useState(
     parseInt(localStorage.getItem(`prepwise_expert_attempts_${q.id}`)) || 0
   );
+  const [ratingSelectorOpen, setRatingSelectorOpen] = useState(false);
 
   const typewrite = useCallback((text) => {
     if (typewriterRef.current) clearInterval(typewriterRef.current);
@@ -51,11 +52,11 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
     const company = q.company || "Genpact";
     
     const toneInstructions = {
-      humble: "Answer in a humble, self-aware tone. Acknowledge what you know and what you are still learning. Be honest about limitations.",
-      confident: "Answer in a confident, assertive tone. State facts directly. No hedging language. Show command of the subject.",
-      story: "Answer using a real-world story or scenario to illustrate the concept. Start with a brief anecdote, then explain the technical concept through it.",
-      concise: "Answer in the most concise way possible. Maximum 3-4 sentences. No padding, no repetition. Every word must earn its place.",
-      technical: "Answer with full technical depth. Include code snippets, proper terminology, edge cases, and implementation details.",
+      Humble: "Answer in a humble, self-aware tone. Acknowledge what you know and what you are still learning. Be honest about limitations.",
+      Confident: "Answer in a confident, assertive tone. State facts directly. No hedging language. Show command of the subject.",
+      "Story-driven": "Answer using a real-world story or scenario to illustrate the concept. Start with a brief anecdote, then explain the technical concept through it.",
+      Concise: "Answer in the most concise way possible. Maximum 3-4 sentences. No padding, no repetition. Every word must earn its place.",
+      Technical: "Answer with full technical depth. Include code snippets, proper terminology, edge cases, and implementation details.",
     };
 
     const fullPrompt = `You are an expert answering an interview question for a preparation platform.
@@ -81,6 +82,12 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
 
   const isTyping = generating || (displayedAnswer && displayedAnswer.length < (answer?.length || 0));
   const canDelete = userRole === 'admin' || userRole === 'domain' || userRole === 'domain_expert';
+
+  const handleRateSelect = (r) => {
+    setExpertRating(r);
+    localStorage.setItem(`prepwise_expert_rating_${q.id}`, r);
+    setRatingSelectorOpen(false);
+  };
 
   return (
     <div className="card-hover" style={{
@@ -114,17 +121,39 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
       
       {/* DOMAIN EXPERT ONLY — hidden in student portal */}
       {isExpert && (
-        <div className="stat-row">
-          <StatPill rating={expertRating} onRate={setExpertRating} questionId={q.id} />
-          <span className="stat-pill">{attempts === 1 ? "1 Attempt" : `${attempts} Attempts`}</span>
+        <div style={{ padding: "0 0 16px 0", position: "relative" }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+            <StatPill 
+              label={expertRating} 
+              rating={expertRating} 
+              onClick={() => setRatingSelectorOpen(!ratingSelectorOpen)} 
+            />
+            <StatPill label={attempts === 1 ? "1 Attempt" : `${attempts} Attempts`} />
+          </div>
+          
+          {/* Inline rating selector dropdown */}
+          {ratingSelectorOpen && (
+            <div className="tone-dropdown" style={{ top: "35px", left: "0", minWidth: "140px", display: "flex", gap: "4px", padding: "6px" }}>
+              {["Poor", "Average", "Good", "Excellent"].map(r => (
+                <div 
+                  key={r}
+                  className="tone-option"
+                  style={{ padding: "6px 10px", fontSize: "11px", textAlign: "center", flex: 1 }}
+                  onClick={() => handleRateSelect(r)}
+                >
+                  {r}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* Action chips row — visible in BOTH portals */}
-      <div className="chip-row">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         <ToneChip selectedTone={selectedTone} onToneChange={setSelectedTone} />
         
-        <button className="chip chip-primary" onClick={() => generate()} disabled={generating}>
+        <Chip variant="primary" onClick={() => generate()} disabled={generating}>
           {!generating ? (
             <>
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
@@ -135,17 +164,17 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
           ) : (
             <><Spinner /> Generating…</>
           )}
-        </button>
+        </Chip>
 
         {canDelete && onEdit && (
-          <Chip variant="neutral" iconOnly title="Edit" onClick={() => onEdit(q)}>
+          <Chip variant="neutral" iconOnly title="Edit" onClick={() => onEdit(q)} style={{ padding: "7px 10px" }}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
               <path d="M11 2l3 3-8 8H3v-3l8-8z"/>
             </svg>
           </Chip>
         )}
 
-        <Chip variant="neutral" iconOnly title="Copy" onClick={() => { navigator.clipboard.writeText(q.text); showToast("Question copied!"); }}>
+        <Chip variant="neutral" iconOnly title="Copy" onClick={() => { navigator.clipboard.writeText(q.text); showToast("Question copied!"); }} style={{ padding: "7px 10px" }}>
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
             <rect x="5" y="5" width="8" height="9" rx="1.5"/>
             <path d="M3 3h6v2"/>
@@ -153,26 +182,17 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
         </Chip>
 
         {canDelete && onDelete && (
-          <Chip variant="neutral" iconOnly title="Delete" onClick={() => onDelete(q.id)}>
+          <Chip variant="neutral" iconOnly title="Delete" onClick={() => onDelete(q.id)} style={{ padding: "7px 10px" }}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
               <path d="M3 4h10M6 4V3h4v1M5 4l1 9h4l1-9"/>
             </svg>
           </Chip>
         )}
 
-        {canDelete && onDuplicate && (
-          <Chip variant="neutral" iconOnly title="Details/Duplicate" onClick={() => onDuplicate(q)}>
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
-              <rect x="3" y="2" width="10" height="12" rx="1.5"/>
-              <path d="M6 6h4M6 9h4M6 12h2"/>
-            </svg>
-          </Chip>
-        )}
-
         {!selectable && (
-          <Chip variant="neutral" iconOnly title="Bookmark" onClick={() => onBookmark(q.id)}>
+          <Chip variant="neutral" iconOnly title="Bookmark" onClick={() => onBookmark(q.id)} style={{ padding: "7px 10px" }}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14" style={{ color: bookmarked ? "var(--red)" : "inherit" }}>
-              <path d="M3 2v13l5-3 5 3V2z"/>
+              <path d="M4 2h8a1 1 0 011 1v10l-5-3-5 3V3a1 1 0 011-1z"/>
             </svg>
           </Chip>
         )}

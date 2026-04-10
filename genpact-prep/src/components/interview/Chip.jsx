@@ -2,25 +2,22 @@ import React from "react";
 import "./Chip.css";
 
 export default function Chip({ 
-  variant = 'neutral', 
-  iconOnly = false, 
-  title, 
+  variant = "neutral", 
   onClick, 
-  disabled = false,
-  children,
+  children, 
+  title, 
   style = {},
-  className = ""
+  disabled = false
 }) {
-  const baseClass = variant === 'primary' ? 'chip-primary' : 'chip-neutral';
-  const customPadding = iconOnly ? { padding: '7px 10px' } : {};
+  const className = `chip ${variant === "primary" ? "chip-primary" : "chip-neutral"}`;
   
   return (
     <button 
-      className={`chip ${baseClass} ${className}`}
-      onClick={onClick}
-      disabled={disabled}
+      className={className} 
+      onClick={onClick} 
       title={title}
-      style={{ ...customPadding, opacity: disabled ? 0.7 : 1, cursor: disabled ? "not-allowed" : "pointer", ...style }}
+      style={style}
+      disabled={disabled}
     >
       {children}
     </button>

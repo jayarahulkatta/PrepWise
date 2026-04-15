@@ -112,7 +112,7 @@ export default function CodingWorkspace({ q, onClose, getToken }) {
           </div>
 
           {/* RIGHT: Output & AI */}
-          <div style={{ display: "flex", flexDirection: "column", padding: 20, background: "var(--card-highest)" }}>
+          <div style={{ display: "flex", flexDirection: "column", padding: 20, background: "var(--card-highest)", overflow: "hidden", minHeight: 0 }}>
             
             {/* Tabs */}
             <div style={{ display: "flex", gap: 24, borderBottom: "1px solid var(--border)", marginBottom: 16 }}>

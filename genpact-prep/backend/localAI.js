@@ -428,4 +428,4 @@ Return exactly the following JSON structure:
   }
 }
 
-module.exports = { generateAnswer, evaluateAnswer, generateChatDebrief, evaluateCode };
+module.exports = { generateAnswer, evaluateAnswer, generateChatDebrief, evaluateCode, gemini, groq };

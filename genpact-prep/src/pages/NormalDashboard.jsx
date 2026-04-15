@@ -6,13 +6,17 @@ import MockInterview from "../components/interview/MockInterview";
 import ChatSimulator from "../components/interview/ChatSimulator";
 import { apiFetch, API_BASE } from "../utils/api";
 import { scoreColor, readinessLabel, daysUntil, SCORE_AXES, QUESTION_TYPES, EXPERIENCE_LEVELS, DIFFICULTIES, formatTimeAgo } from "../utils/constants";
+// CS Subjects addition
+import { CS_SUBJECTS, CS_QUESTIONS } from "../utils/csSubjectsData";
 
 export default function NormalDashboard() {
   const { user, signOut, getToken } = useAuth();
   const [profile, setProfile] = useState(null);
   // No isDomain check — this dashboard is exclusively for interview prep users.
   // Domain experts are routed to DomainDashboard by App.jsx.
-  const [view, setView] = useState("dashboard"); // dashboard | practice | history | saved
+  const [view, setView] = useState("dashboard"); // dashboard | practice | history | saved | cs_subjects
+  // CS Subjects addition — active sub-tab state
+  const [activeCSSubject, setActiveCSSubject] = useState("OS");
   const [loaded, setLoaded] = useState(false);
 
   // Questions
@@ -126,9 +130,24 @@ export default function NormalDashboard() {
   };
 
   // Interview prep only nav — no domain expert items
+  // CS Subjects addition — filter CS questions by active filters and sort
+  const getFilteredCSQuestions = (subjectKey) => {
+    let qs = [...CS_QUESTIONS[subjectKey]];
+    if (filterJob) qs = qs.filter(q => q.job === filterJob);
+    if (filterType) qs = qs.filter(q => q.type === filterType);
+    if (filterExp) qs = qs.filter(q => q.exp === filterExp);
+    if (filterDiff) qs = qs.filter(q => q.diff === filterDiff);
+    if (search) qs = qs.filter(q => q.text.toLowerCase().includes(search.toLowerCase()));
+    if (sortMode === "helpful") qs.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+    else if (sortMode === "recent") qs.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return qs;
+  };
+
   const navItems = [
     { key: "dashboard", icon: "📊", label: "Dashboard" },
     { key: "practice", icon: "📝", label: "Practice" },
+    // CS Subjects addition
+    { key: "cs_subjects", icon: "💻", label: "CS Subjects" },
     { key: "history", icon: "📈", label: "History" },
     { key: "saved", icon: "🔖", label: `Saved (${bookmarks.size})` },
   ];
@@ -332,6 +351,83 @@ export default function NormalDashboard() {
         )}
 
         {/* Domain-only submit view removed — domain experts use DomainDashboard */}
+
+        {/* CS SUBJECTS VIEW — CS Subjects addition */}
+        {view === "cs_subjects" && (
+          <div className="fadeUp">
+            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.5px", marginBottom: 4 }}>CS Subjects</h1>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>Core computer science interview questions</p>
+
+            {/* Sub-tabs: OS / DBMS / CN */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+              {CS_SUBJECTS.map(s => (
+                <button
+                  key={s.key}
+                  onClick={() => setActiveCSSubject(s.key)}
+                  style={{
+                    background: activeCSSubject === s.key ? "var(--blue-dim)" : "var(--card-highest)",
+                    border: `1px solid ${activeCSSubject === s.key ? "rgba(59,130,246,0.3)" : "transparent"}`,
+                    color: activeCSSubject === s.key ? "var(--blue-bright)" : "var(--muted)",
+                    padding: "8px 20px",
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: activeCSSubject === s.key ? 600 : 500,
+                    cursor: "pointer",
+                    fontFamily: "var(--font)",
+                    transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+                  }}
+                  className="btn-secondary-hover"
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Subject description */}
+            <p style={{ fontSize: 12, color: "var(--text2)", marginBottom: 20, padding: "10px 16px", background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }}>
+              {CS_SUBJECTS.find(s => s.key === activeCSSubject)?.fullName} — {getFilteredCSQuestions(activeCSSubject).length} questions
+            </p>
+
+            {/* Filters — reuse same filter bar pattern as Practice view */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
+              <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>Filter:</span>
+              {[
+                { val: filterType, set: setFilterType, opts: QUESTION_TYPES, ph: "All Types" },
+                { val: filterDiff, set: setFilterDiff, opts: DIFFICULTIES, ph: "All Difficulty" },
+              ].map(({ val, set, opts, ph }) => (
+                <select key={ph} value={val} onChange={e => { set(e.target.value); }} style={filterSS}>
+                  <option value="">{ph}</option>{opts.map(o => <option key={o}>{o}</option>)}
+                </select>
+              ))}
+              <div style={{ position: "relative" }}>
+                <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--muted)" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+                <input value={search} onChange={e => { setSearch(e.target.value); }} placeholder="Search…" style={{ ...filterSS, paddingLeft: 32, width: 220, backgroundImage: "none" }} />
+              </div>
+              {(filterType || filterDiff || search) && <button onClick={resetFilters} style={{ background: "var(--red-dim)", border: "1px solid transparent", color: "var(--red)", padding: "6px 14px", borderRadius: 10, fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500 }}>✕ Clear</button>}
+            </div>
+
+            {/* Sort controls */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+              <span style={{ fontSize: 13, color: "var(--muted)" }}>Showing <strong style={{ color: "var(--text)" }}>{getFilteredCSQuestions(activeCSSubject).length}</strong> questions</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                {["helpful", "recent"].map(m => <button key={m} className="btn-secondary-hover" onClick={() => { setSortMode(m); }} style={{ background: sortMode === m ? "var(--blue-dim)" : "transparent", border: `1px solid ${sortMode === m ? "rgba(59,130,246,0.3)" : "var(--border)"}`, color: sortMode === m ? "var(--blue)" : "var(--text2)", padding: "7px 16px", borderRadius: 10, fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500 }}>{m === "helpful" ? "🔥 Popular" : "🕐 Recent"}</button>)}
+              </div>
+            </div>
+
+            {/* Question list */}
+            {getFilteredCSQuestions(activeCSSubject).length === 0 ? (
+              <div style={{ textAlign: "center", padding: 72, color: "var(--muted)", fontSize: 14 }}>No questions match your filters.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {getFilteredCSQuestions(activeCSSubject).map((q, i) => (
+                  <div key={q.id} style={{ animationDelay: `${i * 50}ms` }} className="fadeUp">
+                    <QuestionCard q={q} bookmarked={bookmarks.has(q.id)} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} showToast={showToast} userRole="interviewer" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* SAVED VIEW */}
         {view === "saved" && (

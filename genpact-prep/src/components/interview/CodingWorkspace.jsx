@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Spinner, Badge } from "../ui";
-import { apiFetch } from "../../utils/api";
+import { apiFetch, API_BASE } from "../../utils/api";
 import Chip from "./Chip";
 
-export default function CodingWorkspace({ q, onClose }) {
+export default function CodingWorkspace({ q, onClose, getToken }) {
   const [language, setLanguage] = useState("java");
   const [code, setCode] = useState("");
   const [activeTab, setActiveTab] = useState("output"); // 'output' | 'ai'
@@ -22,10 +22,11 @@ export default function CodingWorkspace({ q, onClose }) {
     setActiveTab("output"); // Switch to output automatically to show running status
 
     try {
-      const response = await apiFetch("/api/code/submit", {
+      const token = await getToken();
+      const response = await apiFetch(`${API_BASE}/code/submit`, {
         method: "POST",
         body: JSON.stringify({ question: q.text, code, language })
-      });
+      }, token);
 
       if (response.error) throw new Error(response.error);
 

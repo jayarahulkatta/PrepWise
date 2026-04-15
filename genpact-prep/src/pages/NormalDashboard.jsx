@@ -491,7 +491,7 @@ export default function NormalDashboard() {
       {/* MODALS */}
       {showMock && <MockInterview onClose={() => setShowMock(false)} allQuestions={allQuestions} company={company} getToken={getToken} onSessionSaved={reloadProfile} />}
       {showChat && <ChatSimulator onClose={() => setShowChat(false)} company={company} getToken={getToken} />}
-      {activeWorkspaceQuestion && <CodingWorkspace q={activeWorkspaceQuestion} onClose={() => setActiveWorkspaceQuestion(null)} />}
+      {activeWorkspaceQuestion && <CodingWorkspace q={activeWorkspaceQuestion} onClose={() => setActiveWorkspaceQuestion(null)} getToken={getToken} />}
       <Toast msg={toast.msg} visible={toast.visible} />
     </div>
   );

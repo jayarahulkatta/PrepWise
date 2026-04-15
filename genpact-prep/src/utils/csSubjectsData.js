@@ -1,10 +1,12 @@
-// CS Subjects addition — static question data for OS, DBMS, CN
+// CS Subjects addition — static question data for OS, DBMS, CN, Java & DSA
 // Structured to match the existing question object shape used by QuestionCard
 
 export const CS_SUBJECTS = [
   { key: "OS", label: "OS", fullName: "Operating Systems" },
   { key: "DBMS", label: "DBMS", fullName: "Database Management Systems" },
   { key: "CN", label: "CN", fullName: "Computer Networks" },
+  // Java & DSA addition
+  { key: "JAVA_DSA", label: "Java & DSA", fullName: "Java & Data Structures" },
 ];
 
 export const CS_QUESTIONS = {
@@ -74,4 +76,18 @@ export const CS_QUESTIONS = {
     { id: "cs-cn-59", text: "What is an IPv4 address? What are the different classes of IPv4?", type: "Technical", diff: "Medium", job: "Software Engineer", company: "CS Fundamentals", date: "2026-04-06", upvotes: 43 },
     { id: "cs-cn-60", text: "What is DNS?", type: "Technical", diff: "Medium", job: "Software Engineer", company: "CS Fundamentals", date: "2026-04-06", upvotes: 61 },
   ],
+  // Java & DSA addition — empty array, questions coming soon
+  JAVA_DSA: [],
 };
+
+// Java & DSA addition — topic groups for empty-state UI
+export const JAVA_DSA_TOPICS = [
+  { key: "java-basics", label: "Java Basics", icon: "☕", description: "OOP, JVM, syntax, and core language features" },
+  { key: "arrays", label: "Arrays", icon: "📊", description: "Traversal, manipulation, and common patterns" },
+  { key: "strings", label: "Strings", icon: "🔤", description: "String operations, regex, and builder patterns" },
+  { key: "linked-list", label: "Linked List", icon: "🔗", description: "Singly, doubly, and circular linked lists" },
+  { key: "stack-queue", label: "Stack & Queue", icon: "📚", description: "LIFO/FIFO structures, deque, and priority queues" },
+  { key: "recursion", label: "Recursion", icon: "🔄", description: "Base cases, backtracking, and memoization" },
+  { key: "trees", label: "Trees", icon: "🌳", description: "BST, AVL, traversals, and tree-based problems" },
+  { key: "sorting-searching", label: "Sorting & Searching", icon: "🔍", description: "Classic algorithms and binary search variants" },
+];

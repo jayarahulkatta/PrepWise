@@ -7,7 +7,7 @@ import ChatSimulator from "../components/interview/ChatSimulator";
 import { apiFetch, API_BASE } from "../utils/api";
 import { scoreColor, readinessLabel, daysUntil, SCORE_AXES, QUESTION_TYPES, EXPERIENCE_LEVELS, DIFFICULTIES, formatTimeAgo } from "../utils/constants";
 // CS Subjects addition
-import { CS_SUBJECTS, CS_QUESTIONS } from "../utils/csSubjectsData";
+import { CS_SUBJECTS, CS_QUESTIONS, JAVA_DSA_TOPICS } from "../utils/csSubjectsData";
 
 export default function NormalDashboard() {
   const { user, signOut, getToken } = useAuth();
@@ -385,9 +385,63 @@ export default function NormalDashboard() {
 
             {/* Subject description */}
             <p style={{ fontSize: 12, color: "var(--text2)", marginBottom: 20, padding: "10px 16px", background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }}>
-              {CS_SUBJECTS.find(s => s.key === activeCSSubject)?.fullName} — {getFilteredCSQuestions(activeCSSubject).length} questions
+              {CS_SUBJECTS.find(s => s.key === activeCSSubject)?.fullName} — {activeCSSubject === "JAVA_DSA" ? "Coming soon" : `${getFilteredCSQuestions(activeCSSubject).length} questions`}
             </p>
 
+            {/* Java & DSA addition — empty state with topic placeholders */}
+            {activeCSSubject === "JAVA_DSA" ? (
+              <div className="fadeUp">
+                {/* Topic group grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14, marginBottom: 32 }}>
+                  {JAVA_DSA_TOPICS.map((topic, i) => (
+                    <div
+                      key={topic.key}
+                      className="card-hover"
+                      style={{
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 16,
+                        padding: 20,
+                        animation: `fadeUp 0.35s cubic-bezier(0.16,1,0.3,1) ${i * 60}ms both`,
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                        <span style={{ fontSize: 20 }}>{topic.icon}</span>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{topic.label}</span>
+                      </div>
+                      <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, marginBottom: 14 }}>{topic.description}</p>
+                      <div style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "4px 12px", borderRadius: 999,
+                        background: "var(--blue-dim)", border: "1px solid rgba(59,130,246,0.15)",
+                        fontSize: 11, fontWeight: 500, color: "var(--blue-bright)",
+                        fontFamily: "var(--font)",
+                      }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 6v6l4 2" />
+                        </svg>
+                        Coming soon
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Central empty state message */}
+                <div style={{
+                  textAlign: "center", padding: "48px 24px",
+                  background: "var(--card)", border: "1px solid var(--border)",
+                  borderRadius: 20,
+                }}>
+                  <div style={{ fontSize: 40, marginBottom: 14, opacity: 0.7 }}>☕</div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>Java & DSA Questions Coming Soon</h3>
+                  <p style={{ fontSize: 13, color: "var(--muted)", maxWidth: 420, margin: "0 auto", lineHeight: 1.7 }}>
+                    We’re curating high-quality Java and Data Structures & Algorithms questions across {JAVA_DSA_TOPICS.length} topics. Check back shortly!
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
             {/* Filters — reuse same filter bar pattern as Practice view */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
               <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>Filter:</span>
@@ -425,6 +479,8 @@ export default function NormalDashboard() {
                   </div>
                 ))}
               </div>
+            )}
+              </>
             )}
           </div>
         )}

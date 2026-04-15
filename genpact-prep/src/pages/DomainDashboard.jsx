@@ -4,6 +4,7 @@ import { StatCard, Toast, SkeletonCard } from "../components/ui";
 import QuestionCard from "../components/interview/QuestionCard";
 import { apiFetch, API_BASE } from "../utils/api";
 import { QUESTION_TYPES, EXPERIENCE_LEVELS, DIFFICULTIES } from "../utils/constants";
+import { CS_QUESTIONS } from "../utils/csSubjectsData";
 
 export default function DomainDashboard() {
   const { user, signOut, getToken } = useAuth();
@@ -64,7 +65,29 @@ export default function DomainDashboard() {
     if (search) params.set("search", search);
 
     apiFetch(`${API_BASE}/questions?${params}`).then(data => {
-      setQuestions(data.questions); setTotalPages(data.totalPages); setTotal(data.total); setLoaded(true);
+      let qs = data.questions;
+      let totalCount = data.total;
+      
+      // Inject local offline Java & DSA questions to display normally 
+      if (!filterType || filterType === "Java & DSA") {
+        let offlineQs = CS_QUESTIONS["JAVA_DSA"].map(q => ({
+          ...q, id: q.id || Math.random().toString(), isCoding: true, 
+          company: "Genpact", type: "Java & DSA" 
+        }));
+        // Apply active frontend filters to the offline dataset
+        if (filterJob) offlineQs = offlineQs.filter(q => q.topic === filterJob || q.job === filterJob);
+        if (filterExp) offlineQs = offlineQs.filter(q => q.exp === filterExp);
+        if (filterDiff) offlineQs = offlineQs.filter(q => q.diff === filterDiff);
+        if (search) offlineQs = offlineQs.filter(q => q.text.toLowerCase().includes(search.toLowerCase()));
+        
+        qs = [...qs, ...offlineQs];
+        totalCount += offlineQs.length;
+      }
+      
+      setQuestions(qs); 
+      setTotalPages(data.totalPages); 
+      setTotal(totalCount); 
+      setLoaded(true);
     }).catch(() => setLoaded(true));
   }, [view, filterJob, filterType, filterExp, filterDiff, search, sortMode, page]);
 
@@ -77,6 +100,13 @@ export default function DomainDashboard() {
   const handleDelete = useCallback(async (id) => {
     if (!window.confirm("Are you sure you want to delete this question?")) return;
     try {
+      // Mock delete for offline static questions
+      if (typeof id === 'string' && id.startsWith('jd-')) {
+        setQuestions(prev => prev.filter(q => q.id !== id));
+        setTotal(t => Math.max(0, t - 1));
+        showToast("Static question removed from view");
+        return;
+      }
       const token = await getToken();
       await apiFetch(`${API_BASE}/questions/${id}`, { method: "DELETE" }, token);
       setQuestions(prev => prev.filter(q => q.id !== id));

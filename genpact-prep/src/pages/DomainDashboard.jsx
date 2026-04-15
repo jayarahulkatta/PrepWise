@@ -149,6 +149,7 @@ export default function DomainDashboard() {
     color: "var(--text)", fontSize: 13, fontFamily: "var(--font)", transition: "all 0.3s",
   };
   const selectSt = { ...inputSt, cursor: "pointer" };
+  const filterSt = { ...selectSt, width: "auto", padding: "8px 14px", border: "1px solid var(--border)" };
 
   const contributorLevel = (score) => {
     if (score >= 200) return { label: "Master", color: "var(--purple)" };
@@ -314,13 +315,13 @@ export default function DomainDashboard() {
                 { val: filterExp, set: setFilterExp, opts: EXPERIENCE_LEVELS, ph: "All Levels" },
                 { val: filterDiff, set: setFilterDiff, opts: DIFFICULTIES, ph: "All Difficulty" },
               ].map(({ val, set, opts, ph }) => (
-                <select key={ph} value={val} onChange={e => { set(e.target.value); setPage(1); }} style={selectSt}>
+                <select key={ph} value={val} onChange={e => { set(e.target.value); setPage(1); }} style={filterSt}>
                   <option value="">{ph}</option>{opts.map(o => <option key={o}>{o}</option>)}
                 </select>
               ))}
               <div style={{ position: "relative" }}>
                 <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--muted)" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-                <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search…" style={{ ...inputSt, paddingLeft: 32, width: 180 }} />
+                <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search…" style={{ ...filterSt, paddingLeft: 32, width: 180, cursor: "text" }} />
               </div>
               {(filterJob || filterType || filterExp || filterDiff || search) && <button onClick={resetFilters} style={{ background: "var(--red-dim)", border: "1px solid transparent", color: "var(--red)", padding: "6px 14px", borderRadius: 10, fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500 }}>✕ Clear</button>}
             </div>

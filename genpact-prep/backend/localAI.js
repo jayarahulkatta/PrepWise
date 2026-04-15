@@ -380,7 +380,11 @@ ${stdout || "(No stdout)"}
 Errors:
 ${stderr || "(No errors)"}
 
-Return exactly the following JSON structure containing your evaluation (no markdown formatting outside of the JSON block):
+### IMPORTANT RULES:
+1. If the provided code is fundamentally NOT written in the requested Language (${language}), immediately mark correctness as "Incorrect" and explain that the user submitted code in the wrong language.
+2. Ensure you strictly return a JSON object with NO markdown formatting outside the JSON block.
+
+Return exactly the following JSON structure:
 {
   "correctness": "Correct" | "Partially Correct" | "Incorrect",
   "explanation": "Clear explanation of the evaluation",

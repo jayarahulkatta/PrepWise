@@ -142,7 +142,7 @@ export default function CodingWorkspace({ q, onClose, getToken }) {
             </div>
 
             {/* Content Area */}
-            <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
+            <div style={{ flex: 1, overflowY: "auto", paddingRight: 4, paddingBottom: 24 }}>
               {status === "idle" && (
                 <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--muted)", opacity: 0.6 }}>
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" style={{ marginBottom: 16 }}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>

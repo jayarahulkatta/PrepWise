@@ -4,7 +4,11 @@ async function executeCode(code, language) {
   const apiKey = process.env.SANDBOX_API_KEY;
 
   if (!url || !apiKey) {
-    throw new Error('Sandbox configuration missing in environment.');
+    return {
+      success: false,
+      stdout: '',
+      stderr: `Execution Provider Error: Sandbox configuration missing.\nPlease add SANDBOX_API_URL and SANDBOX_API_KEY to your .env file.`
+    };
   }
 
   try {

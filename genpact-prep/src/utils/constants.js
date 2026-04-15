@@ -6,7 +6,7 @@ export const TONES = {
   technical: "🔧 Technical",
 };
 
-export const QUESTION_TYPES = ["Technical", "HR", "Background", "Behavioral"];
+export const QUESTION_TYPES = ["Technical", "HR", "Background", "Behavioral", "Java & DSA"];
 export const EXPERIENCE_LEVELS = ["Fresher", "1-3 Years", "3-5 Years", "Senior"];
 export const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 

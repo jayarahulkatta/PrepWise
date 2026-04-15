@@ -127,7 +127,8 @@ export default function DomainDashboard() {
     setSubmitting(true);
     try {
       const token = await getToken();
-      const res = await apiFetch(`${API_BASE}/questions/submit`, { method: "POST", body: JSON.stringify(form) }, token);
+      const payload = { ...form, isCoding: form.type === "Java & DSA" };
+      const res = await apiFetch(`${API_BASE}/questions/submit`, { method: "POST", body: JSON.stringify(payload) }, token);
       showToast(res.message || "Question published!");
       setForm({ company: "Genpact", job: "", type: "Technical", diff: "Medium", exp: "Fresher", text: "" });
       // Reload stats

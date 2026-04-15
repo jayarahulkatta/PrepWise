@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const questionSchema = new mongoose.Schema({
   company: { type: String, required: true, index: true },
   job: { type: String, required: true },
-  type: { type: String, required: true, enum: ['Technical', 'HR', 'Background', 'Behavioral'] },
+  type: { type: String, required: true, enum: ['Technical', 'HR', 'Background', 'Behavioral', 'Java & DSA'] },
   diff: { type: String, required: true, enum: ['Easy', 'Medium', 'Hard'] },
   exp: { type: String, required: true },
   text: { type: String, required: true },
@@ -18,6 +18,7 @@ const questionSchema = new mongoose.Schema({
     up: [{ type: String }],   // Firebase UIDs
     down: [{ type: String }],
   },
+  isCoding: { type: Boolean, default: false },
 }, { timestamps: true });
 
 questionSchema.index({ company: 1, status: 1 });

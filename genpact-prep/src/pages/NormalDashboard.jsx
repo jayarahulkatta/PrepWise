@@ -137,6 +137,23 @@ export default function NormalDashboard() {
   // CS Subjects addition — filter CS questions by active filters and sort
   const getFilteredCSQuestions = (subjectKey) => {
     let qs = [...CS_QUESTIONS[subjectKey]];
+    
+    // Inject any live database questions that are designated as 'Java & DSA'
+    if (subjectKey === "JAVA_DSA") {
+      const liveCodingQs = allQuestions.filter(q => q.type === "Java & DSA");
+      // Map live questions into the same expected shape as the hardcoded static ones
+      const mappedLiveQs = liveCodingQs.map((q, idx) => ({
+        id: q.id,
+        topic: q.job || "misc", // Fallback mapping for the sub-topic filters
+        text: q.text,
+        comp: q.company,
+        diff: q.diff || "Medium",
+        upvotes: q.upvotes || 0,
+        isLiveDB: true
+      }));
+      qs = [...qs, ...mappedLiveQs];
+    }
+
     // Java & DSA — filter by active topic
     if (subjectKey === "JAVA_DSA" && activeJDTopic !== "all") qs = qs.filter(q => q.topic === activeJDTopic);
     if (filterJob) qs = qs.filter(q => q.job === filterJob);

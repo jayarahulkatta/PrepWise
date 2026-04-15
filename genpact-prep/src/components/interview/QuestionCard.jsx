@@ -6,7 +6,7 @@ import Chip from "./Chip";
 import ToneChip from "./ToneChip";
 import StatPill from "./StatPill";
 
-export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole }) {
+export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole, isCodingQuestion, onOpenWorkspace }) {
   const { role } = useAuth();
   const isExpert = role === "domain_expert";
 
@@ -151,20 +151,30 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
 
       {/* Action chips row — visible in BOTH portals */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        <ToneChip selectedTone={selectedTone} onToneChange={setSelectedTone} />
+        {!isCodingQuestion && <ToneChip selectedTone={selectedTone} onToneChange={setSelectedTone} />}
         
-        <Chip variant="primary" onClick={() => generate()} disabled={generating}>
-          {!generating ? (
-            <>
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
-                <path d="M3 8h10M8 3l5 5-5 5" strokeLinecap="round"/>
-              </svg>
-              Generate answer
-            </>
-          ) : (
-            <><Spinner /> Generating…</>
-          )}
-        </Chip>
+        {isCodingQuestion ? (
+          <Chip variant="primary" onClick={() => onOpenWorkspace(q)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            Solve in Workspace
+          </Chip>
+        ) : (
+          <Chip variant="primary" onClick={() => generate()} disabled={generating}>
+            {!generating ? (
+              <>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
+                  <path d="M3 8h10M8 3l5 5-5 5" strokeLinecap="round"/>
+                </svg>
+                Generate answer
+              </>
+            ) : (
+              <><Spinner /> Generating…</>
+            )}
+          </Chip>
+        )}
 
         {canDelete && onEdit && (
           <Chip variant="neutral" iconOnly title="Edit" onClick={() => onEdit(q)} style={{ padding: "7px 10px" }}>

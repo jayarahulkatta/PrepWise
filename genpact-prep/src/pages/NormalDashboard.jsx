@@ -6,6 +6,7 @@ import MockInterview from "../components/interview/MockInterview";
 import ChatSimulator from "../components/interview/ChatSimulator";
 import { apiFetch, API_BASE } from "../utils/api";
 import { scoreColor, readinessLabel, daysUntil, SCORE_AXES, QUESTION_TYPES, EXPERIENCE_LEVELS, DIFFICULTIES, formatTimeAgo } from "../utils/constants";
+import CodingWorkspace from "../components/interview/CodingWorkspace";
 // CS Subjects addition
 import { CS_SUBJECTS, CS_QUESTIONS, JAVA_DSA_TOPICS } from "../utils/csSubjectsData";
 
@@ -20,6 +21,7 @@ export default function NormalDashboard() {
   // Java & DSA — active topic filter
   const [activeJDTopic, setActiveJDTopic] = useState("all");
   const [loaded, setLoaded] = useState(false);
+  const [activeWorkspaceQuestion, setActiveWorkspaceQuestion] = useState(null);
 
   // Questions
   const [questions, setQuestions] = useState([]);
@@ -455,7 +457,17 @@ export default function NormalDashboard() {
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {getFilteredCSQuestions(activeCSSubject).map((q, i) => (
                   <div key={q.id} style={{ animationDelay: `${i * 50}ms` }} className="fadeUp">
-                    <QuestionCard q={q} bookmarked={bookmarks.has(q.id)} liked={likes.has(q.id)} onBookmark={onBookmark} onLike={onLike} showToast={showToast} userRole="interviewer" />
+                    <QuestionCard 
+                      q={q} 
+                      bookmarked={bookmarks.has(q.id)} 
+                      liked={likes.has(q.id)} 
+                      onBookmark={onBookmark} 
+                      onLike={onLike} 
+                      showToast={showToast} 
+                      userRole="interviewer"
+                      isCodingQuestion={activeCSSubject === "JAVA_DSA"}
+                      onOpenWorkspace={setActiveWorkspaceQuestion}
+                    />
                   </div>
                 ))}
               </div>
@@ -479,6 +491,7 @@ export default function NormalDashboard() {
       {/* MODALS */}
       {showMock && <MockInterview onClose={() => setShowMock(false)} allQuestions={allQuestions} company={company} getToken={getToken} onSessionSaved={reloadProfile} />}
       {showChat && <ChatSimulator onClose={() => setShowChat(false)} company={company} getToken={getToken} />}
+      {activeWorkspaceQuestion && <CodingWorkspace q={activeWorkspaceQuestion} onClose={() => setActiveWorkspaceQuestion(null)} />}
       <Toast msg={toast.msg} visible={toast.visible} />
     </div>
   );

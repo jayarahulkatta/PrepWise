@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-const { generateAnswer, evaluateAnswer, generateChatDebrief } = require('./localAI');
+const { generateAnswer, evaluateAnswer, generateChatDebrief, evaluateCode } = require('./localAI');
+const { executeCode } = require('./sandbox');
 const connectDB = require('./db');
 const Question = require('./models/Question');
 const User = require('./models/User');
@@ -645,6 +646,37 @@ app.post('/api/debrief', async (req, res) => {
   } catch (error) {
     console.error('Debrief Error:', error);
     res.status(500).json({ error: 'Failed to generate debrief' });
+  }
+});
+
+// Java & DSA Code Submission Workspace
+app.post('/api/code/submit', requireAuth, async (req, res) => {
+  const { question, code, language } = req.body;
+  
+  if (!question || !code || !language) {
+    return res.status(400).json({ error: 'Question, code, and language are required.' });
+  }
+
+  try {
+    // 1. Execute Code
+    const execResult = await executeCode(code, language);
+    
+    // 2. Evaluate with AI
+    const aiReview = await evaluateCode(
+      question, 
+      code, 
+      language, 
+      execResult.stdout, 
+      execResult.stderr
+    );
+    
+    res.json({
+      execution: execResult,
+      evaluation: aiReview
+    });
+  } catch (error) {
+    console.error('Code Submit Error:', error);
+    res.status(500).json({ error: 'Failed to evaluate code submission.' });
   }
 });
 

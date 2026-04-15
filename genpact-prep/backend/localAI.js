@@ -361,4 +361,67 @@ Analyze the candidate's performance and return ONLY valid JSON (no markdown):
   };
 }
 
-module.exports = { generateAnswer, evaluateAnswer, generateChatDebrief };
+// ─── CODING WORKSPACE EVALUATOR ─────────────────────────────────────────────
+async function evaluateCode(questionText, codeText, language, stdout, stderr) {
+  const evalPrompt = `Analyze the following coding solution.
+
+Question:
+${questionText}
+
+Code:
+${codeText}
+
+Language:
+${language}
+
+Execution Output:
+${stdout || "(No stdout)"}
+
+Errors:
+${stderr || "(No errors)"}
+
+Return exactly the following JSON structure containing your evaluation (no markdown formatting outside of the JSON block):
+{
+  "correctness": "Correct" | "Partially Correct" | "Incorrect",
+  "explanation": "Clear explanation of the evaluation",
+  "edgeCasesMissed": ["case 1", "case 2"],
+  "timeComplexity": "O(N)",
+  "spaceComplexity": "O(1)",
+  "suggestions": ["improvement 1", "improvement 2"]
+}`;
+
+  try {
+    const response = await gemini.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: evalPrompt,
+      generationConfig: {
+        responseMimeType: 'application/json'
+      }
+    });
+    const parsed = JSON.parse(response.text);
+    return parsed;
+  } catch (err) {
+    console.warn('⚠️ Gemini evaluateCode failed:', err.message);
+    try {
+      const gResponse = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'system', content: evalPrompt }],
+        temperature: 0.1,
+      });
+      const cleaned = (gResponse.choices[0].message.content || '').replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleaned);
+    } catch (gErr) {
+      console.warn('⚠️ Groq evaluateCode failed:', gErr.message);
+      return {
+        correctness: "Partially Correct",
+        explanation: "AI Evaluation unavailable. Refer to execution output.",
+        edgeCasesMissed: [],
+        timeComplexity: "Unknown",
+        spaceComplexity: "Unknown",
+        suggestions: []
+      };
+    }
+  }
+}
+
+module.exports = { generateAnswer, evaluateAnswer, generateChatDebrief, evaluateCode };

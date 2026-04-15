@@ -1,29 +1,22 @@
 // backend/sandbox.js
 async function executeCode(code, language) {
-  const url = process.env.SANDBOX_API_URL;
+  // Gracefully fallback to the free public Piston Code Execution network 
+  // if no private URL is configured.
+  const url = process.env.SANDBOX_API_URL || "https://emkc.org/api/v2/piston/execute";
   const apiKey = process.env.SANDBOX_API_KEY;
 
-  if (!url || !apiKey) {
-    return {
-      success: false,
-      stdout: '',
-      stderr: `Execution Provider Error: Sandbox configuration missing.\nPlease add SANDBOX_API_URL and SANDBOX_API_KEY to your .env file.`
-    };
-  }
-
   try {
-    // A standard generic sandbox execution payload
-    // Easily configurable if the actual sandbox format deviates
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'x-api-key': apiKey // Sent in both headers as fallback coverage
+        ...(apiKey && { 'Authorization': `Bearer ${apiKey}`, 'x-api-key': apiKey })
       },
+      // Piston Sandbox API required payload format
       body: JSON.stringify({
-        language,
-        code
+        language: language.toLowerCase(),
+        version: "*",
+        files: [{ content: code }]
       })
     });
 
@@ -38,7 +31,17 @@ async function executeCode(code, language) {
 
     const data = await response.json();
     
-    // Abstracting various standard response formats (generic mapping)
+    // Abstracting Piston V2 Response Shape
+    if (data.run) {
+      return {
+        success: data.run.code === 0,
+        stdout: data.run.stdout || '',
+        stderr: data.run.stderr || '',
+        time: '< 1'
+      };
+    }
+    
+    // Legacy mapping just in case
     const stdout = typeof data.stdout === 'string' ? data.stdout : 
                   (typeof data.output === 'string' ? data.output : '');
                   

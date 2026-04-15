@@ -69,10 +69,10 @@
   background: #1a1a2e;
   border: 1px solid #2e2e44;
   border-radius: 12px;
-  z-index: 50;
+  z-index: 9999;
   min-width: 160px;
   padding: 6px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 

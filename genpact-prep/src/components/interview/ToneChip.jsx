@@ -23,7 +23,7 @@ export default function ToneChip({ selectedTone, onToneChange }) {
   };
 
   return (
-    <div className="tone-dropdown-container" ref={toneRef} style={{ position: "relative" }}>
+    <div className="tone-dropdown-container" ref={toneRef} style={{ position: "relative", overflow: "visible", zIndex: toneOpen ? 9999 : "auto", display: "inline-block" }}>
       <button 
         className={`chip chip-neutral ${toneOpen ? "chip-active" : ""}`}
         onClick={() => setToneOpen(!toneOpen)}

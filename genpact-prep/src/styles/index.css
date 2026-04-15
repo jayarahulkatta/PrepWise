@@ -134,7 +134,7 @@ body::after {
 /* ═══ INTERACTIVE ELEMENTS ═══ */
 .card-hover {
   transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
-  will-change: transform, box-shadow, background;
+  overflow: visible;
 }
 .card-hover:hover {
   transform: translateY(-2px);

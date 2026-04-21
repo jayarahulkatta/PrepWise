@@ -1,12 +1,26 @@
+import { useState } from "react";
 import { AuthProvider, useAuth, ROLE_DOMAIN_EXPERT } from "./AuthContext";
 import AuthPage from "./AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import NormalDashboard from "./pages/NormalDashboard";
 import DomainDashboard from "./pages/DomainDashboard";
+import LandingPage from "./pages/LandingPage";
 import "./styles/index.css";
 
 function AppRouter() {
   const { user, profile, loading, role, refreshProfile } = useAuth();
+
+  // ─── Landing page state ──────────────────────────────────────────────────
+  // When user is not logged in, show the landing page first.
+  // Clicking any CTA flips to AuthPage with the right tab pre-selected.
+  const [showLanding, setShowLanding] = useState(true);
+  const [authMode, setAuthMode] = useState("login");
+
+  const handleNavigate = (destination) => {
+    // destination: "login" | "signup" | "domain_expert"
+    setAuthMode(destination === "domain_expert" ? "domain" : destination);
+    setShowLanding(false);
+  };
 
   // Loading state
   if (loading) {
@@ -27,8 +41,18 @@ function AppRouter() {
     );
   }
 
-  // Not signed in → Auth page
-  if (!user) return <AuthPage />;
+  // Not signed in → Landing page or Auth page
+  if (!user) {
+    if (showLanding) {
+      return <LandingPage onNavigate={handleNavigate} />;
+    }
+    return (
+      <AuthPage
+        initialMode={authMode}
+        onBack={() => setShowLanding(true)}
+      />
+    );
+  }
 
   // Signed in but no onboarding → Onboarding
   // Pass the current role so onboarding knows which profile form to show

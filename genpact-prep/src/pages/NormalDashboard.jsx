@@ -482,7 +482,7 @@ export default function NormalDashboard() {
                       onLike={onLike} 
                       showToast={showToast} 
                       userRole="interviewer"
-                      isCodingQuestion={activeCSSubject === "JAVA_DSA"}
+                      isCodingQuestion={activeCSSubject === "JAVA_DSA" && q.topic !== "java-basics"}
                       onOpenWorkspace={setActiveWorkspaceQuestion}
                     />
                   </div>

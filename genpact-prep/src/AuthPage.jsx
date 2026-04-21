@@ -20,12 +20,13 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); -webkit
 @keyframes float2 { 0%,100% { transform: translate(0,0) scale(1) } 33% { transform: translate(-25px,20px) scale(1.08) } 66% { transform: translate(15px, -25px) scale(0.92) } }
 `;
 
-export default function AuthPage() {
+export default function AuthPage({ initialMode: initialModeProp, onBack }) {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDomain, lastLogoutRoleRef } = useAuth();
 
-  // Auto-select the Domain Expert tab if the user just logged out from domain
-  const initialMode = lastLogoutRoleRef?.current === "domain_expert" ? "domain" : "login";
-  const [mode, setMode] = useState(initialMode);
+  // Use prop if provided (from landing page CTA), else fall back to logout-role logic
+  const resolvedInitialMode = initialModeProp
+    || (lastLogoutRoleRef?.current === "domain_expert" ? "domain" : "login");
+  const [mode, setMode] = useState(resolvedInitialMode);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -304,6 +305,26 @@ export default function AuthPage() {
                   {loading ? "Please wait…" : "🔐 Access Domain Portal"}
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* ─── Back to Landing Page ──────────────────────────────────────────── */}
+          {onBack && (
+            <div style={{ textAlign: "center", marginBottom: 12 }}>
+              <button
+                onClick={onBack}
+                type="button"
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "var(--muted)", fontSize: 12, fontFamily: "var(--font)", fontWeight: 500,
+                  padding: "8px 16px", transition: "all 0.3s",
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = "var(--text2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; }}
+              >
+                ← Back to Home
+              </button>
             </div>
           )}
 

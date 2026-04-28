@@ -84,17 +84,17 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
     }, cleaned.length > 600 ? 5 : 8);
   }, []);
 
-  const stopGenerating = useCallback(() => {
+  const stopGenerating = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
     if (typewriterRef.current) clearInterval(typewriterRef.current);
     setGenerating(false);
-  }, []);
+    setAnswer(displayedAnswer);
+  };
 
   const generate = async (feedback = null) => {
-    if (generating) { stopGenerating(); return; }
 
     if (isExpert && !feedback) {
       const newCount = attempts + 1;
@@ -234,8 +234,8 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
             Solve in Workspace
           </Chip>
         ) : (
-          <Chip variant={generating ? "stop" : "primary"} onClick={() => generate()}>
-            {!generating ? (
+          <Chip variant={isTyping ? "stop" : "primary"} onClick={() => isTyping ? stopGenerating() : generate()}>
+            {!isTyping ? (
               <>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
                   <path d="M3 8h10M8 3l5 5-5 5" strokeLinecap="round"/>

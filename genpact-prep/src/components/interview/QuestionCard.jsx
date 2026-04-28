@@ -1,10 +1,54 @@
 import { useState, useRef, useCallback } from "react";
-import { Badge, Spinner, TypingDots } from "../ui";
+import { Badge, TypingDots } from "../ui";
 import { callAI } from "../../utils/api";
 import { useAuth } from "../../AuthContext";
 import Chip from "./Chip";
 import ToneChip from "./ToneChip";
 import StatPill from "./StatPill";
+
+/* ── Utility: strip markdown symbols for clean display ── */
+function stripMarkdown(text) {
+  if (!text) return "";
+  return text
+    .replace(/^#{1,6}\s+/gm, "")           // headings
+    .replace(/\*\*(.+?)\*\*/g, "$1")        // bold
+    .replace(/\*(.+?)\*/g, "$1")            // italic
+    .replace(/__(.+?)__/g, "$1")            // bold alt
+    .replace(/_(.+?)_/g, "$1")              // italic alt
+    .replace(/~~(.+?)~~/g, "$1")            // strikethrough
+    .replace(/`{1,3}([^`]+)`{1,3}/g, "$1") // inline/block code
+    .replace(/^\s*[-*+]\s+/gm, "• ")       // bullet lists → clean bullet
+    .replace(/^\s*\d+\.\s+/gm, (m) => m)   // keep numbered lists as-is
+    .replace(/^>\s?/gm, "")                 // blockquotes
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // links → just text
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, "")   // images
+    .replace(/^---$/gm, "")                 // horizontal rules
+    .replace(/\n{3,}/g, "\n\n")             // collapse excess newlines
+    .trim();
+}
+
+/* ── Utility: clean text for TTS (strip markdown + non-speakable chars) ── */
+function cleanForSpeech(text) {
+  if (!text) return "";
+  return text
+    .replace(/^#{1,6}\s+/gm, "")           // headings
+    .replace(/\*\*(.+?)\*\*/g, "$1")        // bold
+    .replace(/\*(.+?)\*/g, "$1")            // italic
+    .replace(/__(.+?)__/g, "$1")            // bold alt
+    .replace(/_(.+?)_/g, "$1")              // italic alt
+    .replace(/~~(.+?)~~/g, "$1")            // strikethrough
+    .replace(/`{1,3}([^`]+)`{1,3}/g, "$1") // code
+    .replace(/^\s*[-*+]\s+/gm, "")         // bullet markers
+    .replace(/^>\s?/gm, "")                 // blockquotes
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // links
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, "")   // images
+    .replace(/^---$/gm, "")                 // hr
+    .replace(/•/g, "")                      // bullets
+    .replace(/[#*_~`>|]{2,}|--+/g, "")        // leftover markdown chars
+    .replace(/\n{2,}/g, ". ")               // paragraph breaks → pauses
+    .replace(/\s{2,}/g, " ")               // collapse whitespace
+    .trim();
+}
 
 export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole, isCodingQuestion, onOpenWorkspace }) {
   const { role } = useAuth();
@@ -20,6 +64,7 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
   const [feedbackText, setFeedbackText] = useState("");
   const [displayedAnswer, setDisplayedAnswer] = useState("");
   const typewriterRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   const [expertRating, setExpertRating] = useState(
     localStorage.getItem(`prepwise_expert_rating_${q.id}`) || "Unrated"
@@ -30,22 +75,35 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
   const [ratingSelectorOpen, setRatingSelectorOpen] = useState(false);
 
   const typewrite = useCallback((text) => {
+    const cleaned = stripMarkdown(text);
     if (typewriterRef.current) clearInterval(typewriterRef.current);
     setDisplayedAnswer(""); let i = 0;
     typewriterRef.current = setInterval(() => {
-      if (i < text.length) setDisplayedAnswer(text.slice(0, ++i));
+      if (i < cleaned.length) setDisplayedAnswer(cleaned.slice(0, ++i));
       else clearInterval(typewriterRef.current);
-    }, text.length > 600 ? 5 : 8);
+    }, cleaned.length > 600 ? 5 : 8);
+  }, []);
+
+  const stopGenerating = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (typewriterRef.current) clearInterval(typewriterRef.current);
+    setGenerating(false);
   }, []);
 
   const generate = async (feedback = null) => {
-    if (generating) return;
+    if (generating) { stopGenerating(); return; }
 
     if (isExpert && !feedback) {
       const newCount = attempts + 1;
       setAttempts(newCount);
       localStorage.setItem(`prepwise_expert_attempts_${q.id}`, newCount);
     }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setGenerating(true); setShowAnswer(true); setDisplayedAnswer(""); setRating(null); setShowFeedback(false);
     const feedbackNote = feedback ? `\n\nUser feedback: "${feedback}". Address this specifically.` : "";
@@ -63,24 +121,38 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
 Tone instruction: ${toneInstructions[selectedTone]}
 Question: ${q.text}
 Role context: ${q.job} — ${q.diff} level
+IMPORTANT: Do NOT use any markdown formatting. No hashtags, asterisks, dashes for bullet points, or any special formatting characters. Write your answer as plain, natural paragraphs. If you need to list items, use simple numbered sentences or natural prose.
 Generate a high-quality answer following the tone instruction exactly.${feedbackNote}`;
 
     try {
-      const text = await callAI([{ role: "user", content: fullPrompt }], "generate", { tone: selectedTone, questionType: q.type, role: q.job, company });
+      const text = await callAI(
+        [{ role: "user", content: fullPrompt }],
+        "generate",
+        { tone: selectedTone, questionType: q.type, role: q.job, company },
+        controller.signal
+      );
       setAnswer(text); typewrite(text);
-    } catch { setDisplayedAnswer("⚠️ Could not connect to AI. Try again."); }
+    } catch (err) {
+      if (err?.name === "AbortError") {
+        // User stopped generation — keep whatever was displayed
+      } else {
+        setDisplayedAnswer("⚠️ Could not connect to AI. Try again.");
+      }
+    }
     setGenerating(false);
+    abortControllerRef.current = null;
   };
 
   const handleTTS = () => {
     if (!answer && !displayedAnswer) return;
     if (ttsPlaying) { window.speechSynthesis.cancel(); setTtsPlaying(false); return; }
-    const utt = new SpeechSynthesisUtterance(answer || displayedAnswer);
+    const speechText = cleanForSpeech(answer || displayedAnswer);
+    const utt = new SpeechSynthesisUtterance(speechText);
     utt.rate = 0.9; utt.onend = () => setTtsPlaying(false);
     window.speechSynthesis.speak(utt); setTtsPlaying(true);
   };
 
-  const isTyping = generating || (displayedAnswer && displayedAnswer.length < (answer?.length || 0));
+  const isTyping = generating || (displayedAnswer && displayedAnswer.length < (stripMarkdown(answer)?.length || 0));
   const canDelete = userRole === 'admin' || userRole === 'domain' || userRole === 'domain_expert';
 
   const handleRateSelect = (r) => {
@@ -162,7 +234,7 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
             Solve in Workspace
           </Chip>
         ) : (
-          <Chip variant="primary" onClick={() => generate()} disabled={generating}>
+          <Chip variant={generating ? "stop" : "primary"} onClick={() => generate()}>
             {!generating ? (
               <>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
@@ -171,7 +243,12 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
                 Generate answer
               </>
             ) : (
-              <><Spinner /> Generating…</>
+              <>
+                <svg viewBox="0 0 16 16" fill="currentColor" width="13" height="13">
+                  <rect x="3" y="3" width="10" height="10" rx="2"/>
+                </svg>
+                Stop generating
+              </>
             )}
           </Chip>
         )}
@@ -206,15 +283,6 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
             </svg>
           </Chip>
         )}
-
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
-          <Chip variant="neutral" title="Like" onClick={() => onLike(q.id)} style={liked ? { color: "var(--blue)", borderColor: "var(--blue)", background: "var(--blue-dim)" } : {}}>
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
-              <path d="M6 7l2-5 1 1v3h4l-1 6H5V7H3V7h3z"/>
-            </svg>
-            {q.upvotes || 0}
-          </Chip>
-        </div>
       </div>
 
       {showAnswer && (

@@ -18,12 +18,14 @@ export async function apiFetch(url, options = {}, token = null) {
   return res.json();
 }
 
-export async function callAI(messages, endpoint = "generate", extra = {}) {
-  const res = await fetch(`${API_BASE}/${endpoint}`, {
+export async function callAI(messages, endpoint = "generate", extra = {}, signal = null) {
+  const fetchOptions = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages, ...extra }),
-  });
+  };
+  if (signal) fetchOptions.signal = signal;
+  const res = await fetch(`${API_BASE}/${endpoint}`, fetchOptions);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data = await res.json();
   return data.content || data.debrief || data;

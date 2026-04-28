@@ -360,7 +360,7 @@ function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, show
     }, text.length > 600 ? 5 : 8);
   }, []);
 
-  const generate = async (feedback = null) => {
+  const generate = async (feedback = null) => { 
     if (generating) return;
     setGenerating(true); setShowAnswer(true); setDisplayedAnswer(""); setRating(null); setShowFeedback(false);
     const feedbackNote = feedback ? `\n\nUser feedback: "${feedback}". Address this specifically.` : "";

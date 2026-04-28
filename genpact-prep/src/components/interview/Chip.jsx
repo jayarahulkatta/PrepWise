@@ -9,7 +9,7 @@ export default function Chip({
   style = {},
   disabled = false
 }) {
-  const className = `chip ${variant === "primary" ? "chip-primary" : "chip-neutral"}`;
+  const className = `chip ${variant === "primary" ? "chip-primary" : variant === "stop" ? "chip-stop" : "chip-neutral"}`;
   
   return (
     <button 

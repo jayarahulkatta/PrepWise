@@ -345,32 +345,36 @@ app.get('/api/user/profile', requireAuth, async (req, res) => {
 app.put('/api/user/onboarding', requireAuth, async (req, res) => {
   try {
     const { role, prepProfile, domainProfile } = req.body;
-    const updates = { onboardingComplete: true };
+    const setFields = { onboardingComplete: true };
 
     if (role === 'domain' || role === 'normal') {
-      updates.role = role;
+      setFields.role = role;
     }
     if (role === 'normal' && prepProfile) {
-      updates.prepProfile = {
-        targetCompany: prepProfile.targetCompany || 'Genpact',
-        targetRole: prepProfile.targetRole || '',
-        interviewDate: prepProfile.interviewDate || null,
-        experienceLevel: prepProfile.experienceLevel || 'Fresher',
-        focusAreas: prepProfile.focusAreas || [],
-      };
+      // Use dot notation so we don't wipe resumeText or other existing fields
+      setFields['prepProfile.targetCompany'] = prepProfile.targetCompany || 'Genpact';
+      setFields['prepProfile.targetRole'] = prepProfile.targetRole || '';
+      setFields['prepProfile.interviewDate'] = prepProfile.interviewDate || null;
+      setFields['prepProfile.experienceLevel'] = prepProfile.experienceLevel || 'Fresher';
+      setFields['prepProfile.focusAreas'] = prepProfile.focusAreas || [];
     }
     if (role === 'domain' && domainProfile) {
-      updates.domainProfile = {
-        company: domainProfile.company || '',
-        roleArea: domainProfile.roleArea || '',
-        yearsExperience: domainProfile.yearsExperience || 0,
-        specializations: domainProfile.specializations || [],
-      };
+      setFields['domainProfile.company'] = domainProfile.company || '';
+      setFields['domainProfile.roleArea'] = domainProfile.roleArea || '';
+      setFields['domainProfile.yearsExperience'] = domainProfile.yearsExperience || 0;
+      setFields['domainProfile.specializations'] = domainProfile.specializations || [];
     }
 
-    const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).lean();
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: setFields },
+      { new: true, upsert: false }
+    ).lean();
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ message: 'Onboarding complete', role: user.role });
   } catch (err) {
+    console.error('Onboarding error:', err);
     res.status(500).json({ error: 'Failed to complete onboarding' });
   }
 });

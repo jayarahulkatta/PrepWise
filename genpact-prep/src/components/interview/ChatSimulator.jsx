@@ -23,7 +23,8 @@ export default function ChatSimulator({ onClose, company, getToken }) {
     const apiMsgs = updated.map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.text }));
     const sys = `You are a professional ${company || "company"} interviewer for a software/analyst role.\nRules:\n- Stay in character, never say you're AI\n- Ask ONE follow-up based on what candidate said\n- Be encouraging but probe deeper\n- After 5-7 exchanges, conclude and give initial impressions\n- Keep to 2-4 sentences\n- React specifically to what was said`;
     try {
-      const reply = await callAI([{ role: "system", content: sys }, { role: "assistant", content: "Understood." }, ...apiMsgs], "generate");
+      const token = await getToken();
+      const reply = await callAI([{ role: "system", content: sys }, { role: "assistant", content: "Understood." }, ...apiMsgs], "generate", {}, null, token);
       setMessages(prev => [...prev, { role: "ai", text: reply }]);
     } catch { setMessages(prev => [...prev, { role: "ai", text: "Sorry, technical issue. Please continue." }]); }
     setLoading(false);
@@ -33,7 +34,8 @@ export default function ChatSimulator({ onClose, company, getToken }) {
     setPhase("debriefing");
     try {
       // Generate debrief
-      const debriefResult = await callAI(null, "debrief", { messages, company });
+      const token = await getToken();
+      const debriefResult = await callAI(null, "debrief", { messages, company }, null, token);
       setDebrief(debriefResult);
 
       // Save chat session

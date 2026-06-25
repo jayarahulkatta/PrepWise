@@ -67,10 +67,11 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
     const q = questions[idx];
     const ans = userAnswer.trim();
     try {
+      const token = await getToken();
       const raw = await callAI([{
         role: "user",
         content: `You are an experienced ${company || "company"} interviewer. Evaluate this answer using 6 axes.\nQuestion: "${q.text}"\nRole: ${q.job}\nAnswer: "${ans || "(no answer)"}"`
-      }], "evaluate");
+      }], "evaluate", {}, null, token);
       
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
       const scoreEntry = { ...parsed, qid: q.id, questionText: q.text, skipped: false };

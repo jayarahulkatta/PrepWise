@@ -51,7 +51,7 @@ function cleanForSpeech(text) {
 }
 
 export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole, isCodingQuestion, onOpenWorkspace }) {
-  const { role } = useAuth();
+  const { role, getToken } = useAuth();
   const isExpert = role === "domain_expert";
 
   const [answer, setAnswer] = useState(null);
@@ -126,11 +126,13 @@ IMPORTANT: Do NOT use any markdown formatting. No hashtags, asterisks, dashes fo
 Generate a high-quality answer following the tone instruction exactly.${feedbackNote}`;
 
     try {
+      const token = await getToken();
       const text = await callAI(
         [{ role: "user", content: fullPrompt }],
         "generate",
         { tone: selectedTone, questionType: q.type, role: q.job, company },
-        controller.signal
+        controller.signal,
+        token
       );
       setAnswer(text); typewrite(text);
     } catch (err) {

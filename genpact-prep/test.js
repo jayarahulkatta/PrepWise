@@ -1,0 +1,1 @@
+fetch('http://localhost:5000/api/generate', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({messages: [{role: 'user', content: 'Tone instruction: Humble\nQuestion: What is Belady\'s Anomaly?\nRole context: Software Engineer — Hard level'}]})}).then(r => r.json()).then(console.log).catch(console.error)

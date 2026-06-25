@@ -18,12 +18,13 @@ export async function apiFetch(url, options = {}, token = null) {
   return res.json();
 }
 
-export async function callAI(messages, endpoint = "generate", extra = {}, signal = null) {
+export async function callAI(messages, endpoint = "generate", extra = {}, signal = null, token = null) {
   const fetchOptions = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages, ...extra }),
   };
+  if (token) fetchOptions.headers["Authorization"] = `Bearer ${token}`;
   if (signal) fetchOptions.signal = signal;
   const res = await fetch(`${API_BASE}/${endpoint}`, fetchOptions);
   if (!res.ok) throw new Error(`API error: ${res.status}`);

@@ -2,7 +2,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth, ROLE_DOMAIN_EXPERT } from "./AuthContext";
 import AuthPage from "./AuthPage";
-import OnboardingPage from "./pages/OnboardingPage";
 import NormalDashboard from "./pages/NormalDashboard";
 import DomainDashboard from "./pages/DomainDashboard";
 import LandingPage from "./pages/LandingPage";
@@ -48,12 +47,7 @@ function AppRoutes() {
     );
   }
 
-  // Signed in but no onboarding → Onboarding
-  if (!profile?.onboardingComplete) {
-    return <OnboardingPage onComplete={async () => { await refreshProfile(); }} />;
-  }
-
-  // Signed in and onboarded
+  // Signed in — go straight to dashboard, no onboarding gate
   return (
     <Routes>
       <Route path="/" element={role === ROLE_DOMAIN_EXPERT ? <DomainDashboard /> : <NormalDashboard />} />

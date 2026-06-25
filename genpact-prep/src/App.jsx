@@ -35,14 +35,13 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/" element={<LandingPage onNavigate={(dest) => navigate(`/auth?mode=${dest === "domain_expert" ? "domain" : dest}`)} />} />
         <Route path="/auth" element={
           <AuthPage 
             initialMode={new URLSearchParams(location.search).get("mode") || "login"} 
             onBack={() => navigate("/")} 
           />
         } />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     );
   }

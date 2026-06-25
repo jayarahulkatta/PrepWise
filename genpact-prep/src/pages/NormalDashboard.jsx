@@ -211,7 +211,6 @@ export default function NormalDashboard() {
   const extraNavItems = (
     <>
       <button className="nav-link" onClick={() => setShowMock(true)}><span className="nav-icon">⏱️</span>Mock Interview</button>
-      <button className="nav-link" onClick={() => setShowChat(true)}><span className="nav-icon">💬</span>AI Chat</button>
     </>
   );
 
@@ -263,16 +262,11 @@ export default function NormalDashboard() {
             )}
 
             {/* Quick Actions */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 28 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14, marginBottom: 28 }}>
               <button className="card-hover" onClick={() => setShowMock(true)} style={{ padding: 24, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, cursor: "pointer", textAlign: "left", fontFamily: "var(--font)" }}>
                 <div style={{ fontSize: 28, marginBottom: 10 }}>⏱️</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Mock Interview</div>
                 <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>Timed practice with 6-axis coaching</div>
-              </button>
-              <button className="card-hover" onClick={() => setShowChat(true)} style={{ padding: 24, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, cursor: "pointer", textAlign: "left", fontFamily: "var(--font)" }}>
-                <div style={{ fontSize: 28, marginBottom: 10 }}>💬</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>AI Interviewer</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>Live conversation with debrief</div>
               </button>
             </div>
 

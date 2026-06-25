@@ -596,11 +596,8 @@ app.post('/api/generate', optionalAuth, async (req, res) => {
   }
 
   let resumeText = '';
-  if (req.user) {
-    const userDoc = await User.findOne({ firebaseUid: req.user.uid });
-    if (userDoc?.prepProfile?.resumeText) {
-      resumeText = userDoc.prepProfile.resumeText;
-    }
+  if (req.user && req.user.prepProfile?.resumeText) {
+    resumeText = req.user.prepProfile.resumeText;
   }
 
   try {
@@ -643,11 +640,8 @@ app.post('/api/evaluate', optionalAuth, async (req, res) => {
   }
 
   let resumeText = '';
-  if (req.user) {
-    const userDoc = await User.findOne({ firebaseUid: req.user.uid });
-    if (userDoc?.prepProfile?.resumeText) {
-      resumeText = userDoc.prepProfile.resumeText;
-    }
+  if (req.user && req.user.prepProfile?.resumeText) {
+    resumeText = req.user.prepProfile.resumeText;
   }
 
   try {
@@ -716,7 +710,7 @@ app.post('/api/user/resume', requireAuth, upload.single('resume'), async (req, r
     
     if (!resumeText) return res.status(400).json({ error: 'Could not extract text from PDF' });
 
-    const user = await User.findOne({ firebaseUid: req.user.uid });
+    const user = req.user;
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     if (!user.prepProfile) {

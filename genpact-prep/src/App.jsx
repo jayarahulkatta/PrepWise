@@ -8,7 +8,7 @@ import LandingPage from "./pages/LandingPage";
 import "./styles/index.css";
 
 function AppRoutes() {
-  const { user, profile, loading, role, refreshProfile } = useAuth();
+  const { user, loading, role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 

@@ -11,8 +11,8 @@ services:
       - genpact-prep/.env
     environment:
       - NODE_ENV=production
-      # Fallback to local mongo container if MONGODB_URI is not provided in env/dotenv
-      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/prepwise}
+      # Force use of local mongo container instead of remote cluster from .env
+      - MONGODB_URI=mongodb://mongo:27017/prepwise
     depends_on:
       - mongo
 

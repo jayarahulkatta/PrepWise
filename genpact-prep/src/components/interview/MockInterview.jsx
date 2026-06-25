@@ -69,9 +69,10 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
     try {
       const raw = await callAI([{
         role: "user",
-        content: `You are an experienced ${company || "company"} interviewer. Evaluate this answer using 6 axes.\nQuestion: "${q.text}"\nRole: ${q.job}\nAnswer: "${ans || "(no answer)"}"\n\nReturn ONLY valid JSON:\n{"technicalAccuracy":<0-100>,"communicationClarity":<0-100>,"structureOrganization":<0-100>,"depthOfExamples":<0-100>,"roleRelevance":<0-100>,"overallImpression":<0-100>,"strengths":["str1","str2"],"improvements":[{"area":"name","issue":"what","suggestion":"how"}],"feedback":"2-3 sentence coaching"}`
+        content: `You are an experienced ${company || "company"} interviewer. Evaluate this answer using 6 axes.\nQuestion: "${q.text}"\nRole: ${q.job}\nAnswer: "${ans || "(no answer)"}"`
       }], "evaluate");
-      const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+      
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
       const scoreEntry = { ...parsed, qid: q.id, questionText: q.text, skipped: false };
       setScores(prev => [...prev, scoreEntry]);
       setFeedback(parsed);

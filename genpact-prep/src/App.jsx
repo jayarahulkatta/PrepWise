@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth, ROLE_DOMAIN_EXPERT } from "./AuthContext";
 import AuthPage from "./AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -7,20 +8,10 @@ import DomainDashboard from "./pages/DomainDashboard";
 import LandingPage from "./pages/LandingPage";
 import "./styles/index.css";
 
-function AppRouter() {
+function AppRoutes() {
   const { user, profile, loading, role, refreshProfile } = useAuth();
-
-  // ─── Landing page state ──────────────────────────────────────────────────
-  // When user is not logged in, show the landing page first.
-  // Clicking any CTA flips to AuthPage with the right tab pre-selected.
-  const [showLanding, setShowLanding] = useState(true);
-  const [authMode, setAuthMode] = useState("login");
-
-  const handleNavigate = (destination) => {
-    // destination: "login" | "signup" | "domain_expert"
-    setAuthMode(destination === "domain_expert" ? "domain" : destination);
-    setShowLanding(false);
-  };
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Loading state
   if (loading) {
@@ -41,40 +32,42 @@ function AppRouter() {
     );
   }
 
-  // Not signed in → Landing page or Auth page
+  // Not signed in
   if (!user) {
-    if (showLanding) {
-      return <LandingPage onNavigate={handleNavigate} />;
-    }
     return (
-      <AuthPage
-        initialMode={authMode}
-        onBack={() => setShowLanding(true)}
-      />
+      <Routes>
+        <Route path="/" element={<LandingPage onNavigate={(dest) => navigate(`/auth?mode=${dest === "domain_expert" ? "domain" : dest}`)} />} />
+        <Route path="/auth" element={
+          <AuthPage 
+            initialMode={new URLSearchParams(location.search).get("mode") || "login"} 
+            onBack={() => navigate("/")} 
+          />
+        } />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     );
   }
 
   // Signed in but no onboarding → Onboarding
-  // Pass the current role so onboarding knows which profile form to show
   if (!profile?.onboardingComplete) {
     return <OnboardingPage onComplete={async () => { await refreshProfile(); }} />;
   }
 
-  // ─── ROLE-BASED DASHBOARD ROUTING ──────────────────────────────────────────
-  // Domain experts → DomainDashboard (question management portal)
-  // Everyone else (interviewers) → NormalDashboard (interview prep features)
-  if (role === ROLE_DOMAIN_EXPERT) {
-    return <DomainDashboard />;
-  }
-
-  // Default: interviewers and any unrecognized role
-  return <NormalDashboard />;
+  // Signed in and onboarded
+  return (
+    <Routes>
+      <Route path="/" element={role === ROLE_DOMAIN_EXPERT ? <DomainDashboard /> : <NormalDashboard />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRouter />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

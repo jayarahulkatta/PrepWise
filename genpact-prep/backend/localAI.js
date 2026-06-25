@@ -182,6 +182,24 @@ Write as someone would SPEAK — conversational, 150-220 words.`;
 }
 
 // ─── 6-AXIS EVALUATOR ──────────────────────────────────────────────────────
+const { z } = require('zod');
+
+const evaluationSchema = z.object({
+  technicalAccuracy: z.number().min(0).max(100),
+  communicationClarity: z.number().min(0).max(100),
+  structureOrganization: z.number().min(0).max(100),
+  depthOfExamples: z.number().min(0).max(100),
+  roleRelevance: z.number().min(0).max(100),
+  overallImpression: z.number().min(0).max(100),
+  strengths: z.array(z.string()),
+  improvements: z.array(z.object({
+    area: z.string(),
+    issue: z.string(),
+    suggestion: z.string(),
+  })),
+  feedback: z.string(),
+});
+
 async function evaluateAnswer(questionText, answerText, type = 'Technical') {
   if (!answerText || answerText.trim().length === 0) {
     return {
@@ -218,20 +236,26 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "feedback": "2-3 sentence coaching summary"
 }`;
 
-  // Try Gemini
-  try {
-    const response = await gemini.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: evalPrompt,
-    });
-    const cleaned = (response.text || '').replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleaned);
-    return normalizeEvaluation(parsed);
-  } catch (err) {
-    console.warn('⚠️ Gemini eval failed:', err.message);
+  let attempts = 0;
+  while (attempts < 3) {
+    try {
+      const response = await gemini.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: evalPrompt,
+        generationConfig: {
+          responseMimeType: 'application/json'
+        }
+      });
+      const parsed = JSON.parse(response.text);
+      const validated = evaluationSchema.parse(parsed);
+      return normalizeEvaluation(validated);
+    } catch (err) {
+      console.warn(`⚠️ Gemini eval failed (attempt ${attempts + 1}):`, err.message);
+      attempts++;
+    }
   }
 
-  // Try Groq
+  // Try Groq as fallback
   try {
     const response = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
@@ -240,10 +264,11 @@ Return ONLY valid JSON (no markdown, no code blocks):
         { role: 'user', content: 'Evaluate this answer now.' },
       ],
       temperature: 0.2,
+      response_format: { type: "json_object" }
     });
-    const cleaned = (response.choices[0].message.content || '').replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleaned);
-    return normalizeEvaluation(parsed);
+    const parsed = JSON.parse(response.choices[0].message.content);
+    const validated = evaluationSchema.parse(parsed);
+    return normalizeEvaluation(validated);
   } catch (err) {
     console.warn('⚠️ Groq eval failed:', err.message);
   }
@@ -296,6 +321,18 @@ function localEvaluate(answerText) {
   };
 }
 
+const chatDebriefSchema = z.object({
+  overallScore: z.number().min(1).max(10),
+  communicationClarity: z.number().min(1).max(10),
+  technicalDepth: z.number().min(1).max(10),
+  confidence: z.number().min(1).max(10),
+  strongMoments: z.array(z.string()),
+  weakMoments: z.array(z.string()),
+  hireSignal: z.enum(["lean_hire", "lean_no_hire", "strong_hire", "strong_no_hire"]),
+  hireExplanation: z.string(),
+  recommendedPractice: z.array(z.string())
+});
+
 // ─── CHAT DEBRIEF GENERATOR ─────────────────────────────────────────────────
 async function generateChatDebrief(messages, company = 'Genpact') {
   const conversationText = messages.map(m => `${m.role === 'ai' ? 'Interviewer' : 'Candidate'}: ${m.text}`).join('\n');
@@ -318,19 +355,25 @@ Analyze the candidate's performance and return ONLY valid JSON (no markdown):
   "recommendedPractice": ["practice recommendation 1", "practice recommendation 2"]
 }`;
 
-  // Try Gemini
-  try {
-    const response = await gemini.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: debriefPrompt,
-    });
-    const cleaned = (response.text || '').replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleaned);
-  } catch (err) {
-    console.warn('⚠️ Gemini debrief failed:', err.message);
+  let attempts = 0;
+  while (attempts < 3) {
+    try {
+      const response = await gemini.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: debriefPrompt,
+        generationConfig: {
+          responseMimeType: 'application/json'
+        }
+      });
+      const parsed = JSON.parse(response.text);
+      return chatDebriefSchema.parse(parsed);
+    } catch (err) {
+      console.warn(`⚠️ Gemini debrief failed (attempt ${attempts + 1}):`, err.message);
+      attempts++;
+    }
   }
 
-  // Try Groq
+  // Try Groq as fallback
   try {
     const response = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
@@ -339,9 +382,10 @@ Analyze the candidate's performance and return ONLY valid JSON (no markdown):
         { role: 'user', content: 'Generate the debrief now.' },
       ],
       temperature: 0.3,
+      response_format: { type: "json_object" }
     });
-    const cleaned = (response.choices[0].message.content || '').replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleaned);
+    const parsed = JSON.parse(response.choices[0].message.content);
+    return chatDebriefSchema.parse(parsed);
   } catch (err) {
     console.warn('⚠️ Groq debrief failed:', err.message);
   }

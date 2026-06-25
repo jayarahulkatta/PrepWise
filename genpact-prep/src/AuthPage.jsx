@@ -40,13 +40,7 @@ export default function AuthPage({ initialMode: initialModeProp, onBack }) {
     setLoading(true);
     try {
       if (mode === "domain") {
-        // TODO: Replace with real backend auth — remove hardcoded credentials
-        if (email !== "jayarahul696@gmail.com" || password !== "87654321") {
-          setError("Invalid credentials. Domain expert access is restricted.");
-          setLoading(false);
-          return;
-        }
-        await signInAsDomain();
+        await signInAsDomain(email, password);
         // Role is set to "domain_expert" inside signInAsDomain
       } else if (mode === "login") {
         await signInWithEmail(email, password);

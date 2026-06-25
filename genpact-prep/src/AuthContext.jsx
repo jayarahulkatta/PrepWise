@@ -50,24 +50,6 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
-      // If we are hardcoded domain, ignore firebase nulls
-      if (localStorage.getItem("domainAuth") === "true") {
-        setUser({ uid: 'domain-hardcoded' });
-        // Ensure role is set to domain_expert for hardcoded domain auth
-        if (role !== ROLE_DOMAIN_EXPERT) {
-          persistRole(ROLE_DOMAIN_EXPERT);
-        }
-        try {
-          // TODO: Replace with real backend auth — remove hardcoded token
-          const p = await apiFetch(`${API_BASE}/user/profile`, {}, "DOMAIN_SECRET_TOKEN_87654321");
-          setProfile(p);
-        } catch {
-          setProfile(null);
-        }
-        setLoading(false);
-        return;
-      }
-
       if (fbUser) {
         setUser(fbUser);
         // If role is already set from localStorage, keep it. 
@@ -94,8 +76,6 @@ export function AuthProvider({ children }) {
   }, []);
 
   const getToken = async () => {
-    // TODO: Replace with real backend auth — remove hardcoded token
-    if (localStorage.getItem("domainAuth") === "true") return "DOMAIN_SECRET_TOKEN_87654321";
     if (auth.currentUser) return getIdToken(auth.currentUser);
     return null;
   };
@@ -117,7 +97,6 @@ export function AuthProvider({ children }) {
     lastLogoutRoleRef.current = role;
 
     // Clear all persisted state
-    localStorage.removeItem("domainAuth");
     localStorage.removeItem(ROLE_STORAGE_KEY);
 
     await fbSignOut(auth);
@@ -127,18 +106,9 @@ export function AuthProvider({ children }) {
   };
 
   // ─── DOMAIN EXPERT LOGIN ───────────────────────────────────────────────────
-  // TODO: Replace with real backend auth — remove hardcoded credentials
-  const signInAsDomain = async () => {
-    localStorage.setItem("domainAuth", "true");
+  const signInAsDomain = async (email, password) => {
     persistRole(ROLE_DOMAIN_EXPERT);
-    setUser({ uid: 'domain-hardcoded' });
-    
-    try {
-      const p = await apiFetch(`${API_BASE}/user/profile`, {}, "DOMAIN_SECRET_TOKEN_87654321");
-      setProfile(p);
-    } catch {
-      setProfile({ role: 'domain', name: 'Domain Expert', email: 'jayarahul696@gmail.com' });
-    }
+    return await signInWithEmailAndPassword(auth, email, password);
   };
 
   // ─── STANDARD USER LOGIN ───────────────────────────────────────────────────

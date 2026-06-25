@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY genpact-prep/package*.json ./
-RUN npm ci
+RUN npm install
 COPY genpact-prep/ ./
 RUN npm run build
 
@@ -11,7 +11,7 @@ FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY genpact-prep/package*.json ./
-RUN npm ci
+RUN npm install
 COPY genpact-prep/backend ./backend
 COPY --from=builder /app/build ./build
 

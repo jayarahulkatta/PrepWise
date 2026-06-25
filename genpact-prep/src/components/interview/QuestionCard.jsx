@@ -58,6 +58,7 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
   const [generating, setGenerating] = useState(false);
   const [selectedTone, setSelectedTone] = useState("Humble");
   const [showAnswer, setShowAnswer] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [ttsPlaying, setTtsPlaying] = useState(false);
   const [rating, setRating] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -105,7 +106,7 @@ export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike,
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    setGenerating(true); setShowAnswer(true); setDisplayedAnswer(""); setRating(null); setShowFeedback(false);
+    setGenerating(true); setShowAnswer(true); setIsMinimized(false); setDisplayedAnswer(""); setRating(null); setShowFeedback(false);
     const feedbackNote = feedback ? `\n\nUser feedback: "${feedback}". Address this specifically.` : "";
     const company = q.company || "Genpact";
     
@@ -288,7 +289,7 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
       {showAnswer && (
         <div className="fadeIn" style={{ marginTop: 18, borderTop: "1px solid var(--border)", paddingTop: 18 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--green)", fontFamily: "var(--mono)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--green)", fontFamily: "var(--mono)", cursor: answer ? "pointer" : "default" }} onClick={() => answer && setIsMinimized(!isMinimized)}>
               <span style={{
                 width: 7, height: 7, borderRadius: "50%", background: "var(--green)", display: "inline-block",
                 animation: generating ? "pulse 1s infinite" : "none",
@@ -299,39 +300,57 @@ Generate a high-quality answer following the tone instruction exactly.${feedback
               {isTyping && !generating && <TypingDots />}
             </div>
             {answer && <div style={{ display: "flex", gap: 6 }}>
-              <button className="btn-secondary-hover" onClick={handleTTS} style={{ background: ttsPlaying ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${ttsPlaying ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: ttsPlaying ? "var(--green)" : "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>
-                {ttsPlaying ? "Stop" : "Listen"}
-              </button>
-              <button className="btn-secondary-hover" onClick={() => { navigator.clipboard.writeText(answer); showToast("Copied!"); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s", display: "flex", alignItems: "center", gap: "4px" }}>
+              <button className="btn-secondary-hover" onClick={() => setIsMinimized(!isMinimized)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s", display: "flex", alignItems: "center", gap: "4px" }}>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="12" height="12">
-                  <rect x="5" y="5" width="8" height="9" rx="1.5"/>
-                  <path d="M3 3h6v2"/>
+                  {isMinimized ? (
+                    <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
+                  ) : (
+                    <path d="M4 10l4-4 4 4" strokeLinecap="round" strokeLinejoin="round"/>
+                  )}
                 </svg>
-                Copy
+                {isMinimized ? "Expand" : "Minimize"}
               </button>
+              {!isMinimized && (
+                <>
+                  <button className="btn-secondary-hover" onClick={handleTTS} style={{ background: ttsPlaying ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${ttsPlaying ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: ttsPlaying ? "var(--green)" : "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>
+                    {ttsPlaying ? "Stop" : "Listen"}
+                  </button>
+                  <button className="btn-secondary-hover" onClick={() => { navigator.clipboard.writeText(answer); showToast("Copied!"); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text2)", padding: "5px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="12" height="12">
+                      <rect x="5" y="5" width="8" height="9" rx="1.5"/>
+                      <path d="M3 3h6v2"/>
+                    </svg>
+                    Copy
+                  </button>
+                </>
+              )}
             </div>}
           </div>
-          {generating && !displayedAnswer ? <div style={{ color: "var(--muted)", fontSize: 13, padding: "8px 0" }}><TypingDots /></div> :
-            <p style={{ fontSize: 13.5, lineHeight: 1.85, color: "var(--text2)", whiteSpace: "pre-wrap", borderLeft: "2px solid var(--green)", paddingLeft: 16, margin: "4px 0" }}>
-              {displayedAnswer}{isTyping && !generating && <span style={{ animation: "blink 0.7s step-end infinite", color: "var(--green)" }}>▋</span>}
-            </p>}
-          {answer && !generating && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>Helpful?</span>
-              <button onClick={() => { setRating("good"); setShowFeedback(false); showToast("Thanks!"); }} style={{ background: rating === "good" ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${rating === "good" ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: rating === "good" ? "var(--green)" : "var(--text2)", padding: "5px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s", display: "flex", alignItems: "center", gap: "4px" }}>
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="12" height="12">
-                  <path d="M6 7l2-5 1 1v3h4l-1 6H5V7H3V7h3z"/>
-                </svg>
-                Yes
-              </button>
-              <button onClick={() => { setRating("bad"); setShowFeedback(true); }} style={{ background: rating === "bad" ? "var(--red-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${rating === "bad" ? "rgba(239,68,68,0.3)" : "var(--border)"}`, color: rating === "bad" ? "var(--red)" : "var(--text2)", padding: "5px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>
-                Improve
-              </button>
-              {showFeedback && <>
-                <input value={feedbackText} onChange={e => setFeedbackText(e.target.value)} placeholder="How to improve…" style={{ flex: 1, minWidth: 140, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text)", padding: "6px 12px", borderRadius: 8, fontSize: 11, fontFamily: "var(--font)", outline: "none", transition: "border-color 0.2s" }} />
-                <button className="chip chip-primary" onClick={() => generate(feedbackText)} style={{ padding: "6px 14px", fontSize: 11 }}>Regenerate</button>
-              </>}
-            </div>
+          {!isMinimized && (
+            <>
+              {generating && !displayedAnswer ? <div style={{ color: "var(--muted)", fontSize: 13, padding: "8px 0" }}><TypingDots /></div> :
+                <p style={{ fontSize: 13.5, lineHeight: 1.85, color: "var(--text2)", whiteSpace: "pre-wrap", borderLeft: "2px solid var(--green)", paddingLeft: 16, margin: "4px 0" }}>
+                  {displayedAnswer}{isTyping && !generating && <span style={{ animation: "blink 0.7s step-end infinite", color: "var(--green)" }}>▋</span>}
+                </p>}
+              {answer && !generating && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}>Helpful?</span>
+                  <button onClick={() => { setRating("good"); setShowFeedback(false); showToast("Thanks!"); }} style={{ background: rating === "good" ? "var(--green-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${rating === "good" ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: rating === "good" ? "var(--green)" : "var(--text2)", padding: "5px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="12" height="12">
+                      <path d="M6 7l2-5 1 1v3h4l-1 6H5V7H3V7h3z"/>
+                    </svg>
+                    Yes
+                  </button>
+                  <button onClick={() => { setRating("bad"); setShowFeedback(true); }} style={{ background: rating === "bad" ? "var(--red-dim)" : "rgba(255,255,255,0.03)", border: `1px solid ${rating === "bad" ? "rgba(239,68,68,0.3)" : "var(--border)"}`, color: rating === "bad" ? "var(--red)" : "var(--text2)", padding: "5px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500, transition: "all 0.2s" }}>
+                    Improve
+                  </button>
+                  {showFeedback && <>
+                    <input value={feedbackText} onChange={e => setFeedbackText(e.target.value)} placeholder="How to improve…" style={{ flex: 1, minWidth: 140, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text)", padding: "6px 12px", borderRadius: 8, fontSize: 11, fontFamily: "var(--font)", outline: "none", transition: "border-color 0.2s" }} />
+                    <button className="chip chip-primary" onClick={() => generate(feedbackText)} style={{ padding: "6px 14px", fontSize: 11 }}>Regenerate</button>
+                  </>}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

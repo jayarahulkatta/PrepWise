@@ -112,7 +112,7 @@ function isRelevantInterviewQuestion(text) {
 }
 
 // ─── MAIN GENERATOR (CACHE → GEMINI → GROQ → LOCAL) ────────────────────────
-async function generateAnswer(questionText, type = 'Technical', tone = 'confident', role = '', company = 'Genpact') {
+async function generateAnswer(questionText, type = 'Technical', tone = 'confident', role = '', company = 'Genpact', resumeText = '') {
   let extractedQuestion = extractQuestionText(questionText);
 
   // TOKEN OPTIMIZATION: Block random/irrelevant questions locally.
@@ -143,6 +143,10 @@ Tone: ${toneGuide}
 If it is a behavioral question, structure your answer using the STAR (Situation, Task, Action, Result) method.
 Do NOT use markdown formatting like ** or ## in your answer. Use plain text only.
 Write as someone would SPEAK — conversational, 150-220 words.`;
+
+  if (resumeText) {
+    systemPrompt += `\n\nIMPORTANT: Use the candidate's actual resume below to tailor the answer. Reference their specific projects, skills, and experience to make the answer personalized and highly realistic.\n\n--- CANDIDATE RESUME ---\n${resumeText}\n------------------------\n`;
+  }
 
   let fullGeminiPrompt = `${systemPrompt}\n\nQuestion: ${extractedQuestion}`;
 
@@ -200,7 +204,7 @@ const evaluationSchema = z.object({
   feedback: z.string(),
 });
 
-async function evaluateAnswer(questionText, answerText, type = 'Technical') {
+async function evaluateAnswer(questionText, answerText, type = 'Technical', resumeText = '') {
   if (!answerText || answerText.trim().length === 0) {
     return {
       technicalAccuracy: 10, communicationClarity: 10, structureOrganization: 10,
@@ -211,13 +215,18 @@ async function evaluateAnswer(questionText, answerText, type = 'Technical') {
     };
   }
 
-  const evalPrompt = `You are a strict but fair senior technical interviewer. Evaluate the candidate's answer using 6 axes.
+  let evalPrompt = `You are a strict but fair senior technical interviewer. Evaluate the candidate's answer using 6 axes.
 
 Question: "${questionText}"
 Question Type: ${type}
 Candidate's Answer: "${answerText}"
+`;
 
-Return ONLY valid JSON (no markdown, no code blocks):
+  if (resumeText) {
+    evalPrompt += `\nCandidate's Resume Context (use this to check if their examples align with their real experience):\n${resumeText}\n`;
+  }
+
+  evalPrompt += `\nReturn ONLY valid JSON (no markdown, no code blocks):
 {
   "technicalAccuracy": <0-100>,
   "communicationClarity": <0-100>,

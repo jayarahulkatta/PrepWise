@@ -79,6 +79,7 @@ const userSchema = new mongoose.Schema({
     experienceLevel: { type: String, default: 'Fresher' },
     focusAreas: [{ type: String }],
     weakAreas: [{ type: String }],
+    resumeText: { type: String, default: '' },
   },
 
   // Domain User profile

@@ -8,6 +8,10 @@ const connectDB = require('./db');
 const Question = require('./models/Question');
 const User = require('./models/User');
 const { optionalAuth, requireAuth, requireAdmin, requireDomain } = require('./middleware/auth');
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -562,7 +566,7 @@ app.get('/api/user/domain-stats', requireDomain, async (req, res) => {
 // ─── AI ROUTES ──────────────────────────────────────────────────────────────
 
 // Generate ideal answer (with tone passthrough)
-app.post('/api/generate', async (req, res) => {
+app.post('/api/generate', optionalAuth, async (req, res) => {
   const { messages, prompt, tone, questionType, role, company } = req.body;
 
   if (!messages && !prompt) {
@@ -587,13 +591,22 @@ app.post('/api/generate', async (req, res) => {
     extractedType = typeMatch[1].trim();
   }
 
+  let resumeText = '';
+  if (req.user) {
+    const userDoc = await User.findOne({ firebaseUid: req.user.uid });
+    if (userDoc?.prepProfile?.resumeText) {
+      resumeText = userDoc.prepProfile.resumeText;
+    }
+  }
+
   try {
     const answer = await generateAnswer(
       questionText,
       extractedType || 'Technical',
-      tone || 'confident',  // ← tone now respected
+      tone || 'confident',
       role,
-      company || 'Genpact'
+      company || 'Genpact',
+      resumeText
     );
     res.json({ content: answer });
   } catch (error) {
@@ -603,7 +616,7 @@ app.post('/api/generate', async (req, res) => {
 });
 
 // Evaluate candidate answer (6-axis scoring)
-app.post('/api/evaluate', async (req, res) => {
+app.post('/api/evaluate', optionalAuth, async (req, res) => {
   const { messages, prompt } = req.body;
 
   if (!messages && !prompt) {
@@ -625,8 +638,16 @@ app.post('/api/evaluate', async (req, res) => {
     }
   }
 
+  let resumeText = '';
+  if (req.user) {
+    const userDoc = await User.findOne({ firebaseUid: req.user.uid });
+    if (userDoc?.prepProfile?.resumeText) {
+      resumeText = userDoc.prepProfile.resumeText;
+    }
+  }
+
   try {
-    const evaluation = await evaluateAnswer(questionText, answerText);
+    const evaluation = await evaluateAnswer(questionText, answerText, 'Technical', resumeText);
     res.json({ content: JSON.stringify(evaluation) });
   } catch (error) {
     console.error('AI Evaluate Error:', error);
@@ -677,6 +698,33 @@ app.post('/api/code/submit', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Code Submit Error:', error);
     res.status(500).json({ error: 'Failed to evaluate code submission.' });
+  }
+});
+
+// Resume Upload & Parse Route
+app.post('/api/user/resume', requireAuth, upload.single('resume'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    
+    // Parse PDF
+    const pdfData = await pdfParse(req.file.buffer);
+    const resumeText = pdfData.text.trim();
+    
+    if (!resumeText) return res.status(400).json({ error: 'Could not extract text from PDF' });
+
+    const user = await User.findOne({ firebaseUid: req.user.uid });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (!user.prepProfile) {
+      user.prepProfile = {};
+    }
+    user.prepProfile.resumeText = resumeText;
+    await user.save();
+
+    res.json({ message: 'Resume uploaded and parsed successfully', resumeLength: resumeText.length });
+  } catch (err) {
+    console.error('Resume upload error:', err);
+    res.status(500).json({ error: 'Failed to process resume' });
   }
 });
 

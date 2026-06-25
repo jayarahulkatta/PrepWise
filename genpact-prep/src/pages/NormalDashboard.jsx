@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../AuthContext";
 import { SkeletonCard, Toast, StatCard, ScoreBar } from "../components/ui";
+import AppLayout from "../components/layout/AppLayout";
 import QuestionCard from "../components/interview/QuestionCard";
 import MockInterview from "../components/interview/MockInterview";
 import ChatSimulator from "../components/interview/ChatSimulator";
@@ -11,7 +12,7 @@ import CodingWorkspace from "../components/interview/CodingWorkspace";
 import { CS_SUBJECTS, CS_QUESTIONS, JAVA_DSA_TOPICS } from "../utils/csSubjectsData";
 
 export default function NormalDashboard() {
-  const { user, signOut, getToken } = useAuth();
+  const { user, getToken } = useAuth();
   const [profile, setProfile] = useState(null);
   // No isDomain check — this dashboard is exclusively for interview prep users.
   // Domain experts are routed to DomainDashboard by App.jsx.
@@ -56,7 +57,6 @@ export default function NormalDashboard() {
   const [toast, setToast] = useState({ msg: "", visible: false });
   const toastRef = useRef(null);
   const showToast = useCallback(msg => { clearTimeout(toastRef.current); setToast({ msg, visible: true }); toastRef.current = setTimeout(() => setToast(t => ({ ...t, visible: false })), 2500); }, []);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const company = "Genpact";
 
@@ -118,6 +118,39 @@ export default function NormalDashboard() {
     try { const token = await getToken(); const p = await apiFetch(`${API_BASE}/user/profile`, {}, token); setProfile(p); } catch { }
   };
 
+  const [uploadingResume, setUploadingResume] = useState(false);
+
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || file.type !== "application/pdf") {
+      showToast("Please select a PDF file.");
+      return;
+    }
+
+    setUploadingResume(true);
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE}/user/resume`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      showToast(data.message);
+      await reloadProfile();
+    } catch (err) {
+      showToast(err.message || "Failed to upload resume");
+    } finally {
+      setUploadingResume(false);
+      e.target.value = ""; 
+    }
+  };
+
   // Domain-only delete/submit handlers removed — domain experts use DomainDashboard
 
   const jobs = [...new Set(allQuestions.map(q => q.job))];
@@ -175,50 +208,23 @@ export default function NormalDashboard() {
     { key: "saved", icon: "🔖", label: `Saved (${bookmarks.size})` },
   ];
 
+  const extraNavItems = (
+    <>
+      <button className="nav-link" onClick={() => setShowMock(true)}><span className="nav-icon">⏱️</span>Mock Interview</button>
+      <button className="nav-link" onClick={() => setShowChat(true)}><span className="nav-icon">💬</span>AI Chat</button>
+    </>
+  );
+
   return (
-    <div className="app-layout">
-      {/* Sidebar overlay for mobile */}
-      {sidebarOpen && <div className="sidebar-overlay" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 899 }} onClick={() => setSidebarOpen(false)} />}
-
-      {/* Sidebar */}
-      <aside className={`app-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, paddingLeft: 4 }}>
-          <div style={{ width: 28, height: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, transform: "rotate(45deg)" }}>
-            {["#ef4444", "#2563eb", "#2563eb", "#ef4444"].map((c, i) => <span key={i} style={{ borderRadius: 3, background: c }} />)}
-          </div>
-          <span style={{ fontSize: 16, fontWeight: 700 }}>Prep<span style={{ color: "var(--red)" }}>Wise</span></span>
-        </div>
-
-        {navItems.map(n => (
-          <button key={n.key} className={`nav-link ${view === n.key ? "active" : ""}`} onClick={() => { setView(n.key); setSidebarOpen(false); }}>
-            <span className="nav-icon">{n.icon}</span>{n.label}
-          </button>
-        ))}
-
-        <div style={{ borderTop: "1px solid var(--border)", margin: "12px 0", paddingTop: 12 }}>
-          <button className="nav-link" onClick={() => { setShowMock(true); setSidebarOpen(false); }}><span className="nav-icon">⏱️</span>Mock Interview</button>
-          <button className="nav-link" onClick={() => { setShowChat(true); setSidebarOpen(false); }}><span className="nav-icon">💬</span>AI Chat</button>
-        </div>
-
-        <div style={{ marginTop: "auto", padding: "16px 4px", borderTop: "1px solid var(--border)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,var(--blue-bright),var(--blue))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, overflow: "hidden" }}>
-              {user.photoURL ? <img src={user.photoURL} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (user.displayName?.[0] || "U")}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.displayName || "User"}</div>
-              <div style={{ fontSize: 10, color: "var(--muted)" }}>Interview Prep</div>
-            </div>
-          </div>
-          <button onClick={signOut} style={{ width: "100%", background: "none", border: "1px solid var(--border)", color: "var(--red)", padding: "7px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500 }}>Sign Out</button>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main className="app-main">
-        {/* Mobile menu button */}
-        <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, marginBottom: 16, color: "var(--text)" }}>☰</button>
-
+    <>
+      <AppLayout
+      navItems={navItems}
+      view={view}
+      setView={setView}
+      userRoleLabel="Interview Prep"
+      roleDetails={{ description: profile?.prepProfile?.targetRole ? `Preparing for ${profile.prepProfile.targetRole}` : "Interview Prep" }}
+      extraNavItems={extraNavItems}
+    >
         {/* DASHBOARD VIEW */}
         {view === "dashboard" && (
           <div className="fadeUp">
@@ -268,6 +274,25 @@ export default function NormalDashboard() {
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>AI Interviewer</div>
                 <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>Live conversation with debrief</div>
               </button>
+            </div>
+
+            {/* Resume Upload Action */}
+            <div className="card-hover" style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, marginBottom: 28 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>📄 Resume-Aware AI</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>Upload your resume to get highly personalized, realistic mock interviews and feedback based on your actual experience.</div>
+                </div>
+                <div>
+                  <input type="file" accept=".pdf" id="resume-upload" style={{ display: 'none' }} onChange={handleResumeUpload} />
+                  <label htmlFor="resume-upload" style={{ padding: "10px 22px", borderRadius: 12, background: "var(--card-highest)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 13, fontWeight: 600, fontFamily: "var(--font)", cursor: "pointer", display: "inline-block", transition: "all 0.3s" }}>
+                    {uploadingResume ? "Uploading..." : "Upload PDF"}
+                  </label>
+                </div>
+              </div>
+              {profile?.prepProfile?.resumeText && (
+                <div style={{ marginTop: 12, fontSize: 12, color: "var(--green)" }}>✅ Resume uploaded and active! ({profile.prepProfile.resumeText.length} chars extracted)</div>
+              )}
             </div>
 
             {/* Company info */}
@@ -503,14 +528,14 @@ export default function NormalDashboard() {
               </div>}
           </div>
         )}
-      </main>
+      </AppLayout>
 
       {/* MODALS */}
       {showMock && <MockInterview onClose={() => setShowMock(false)} allQuestions={allQuestions} company={company} getToken={getToken} onSessionSaved={reloadProfile} />}
       {showChat && <ChatSimulator onClose={() => setShowChat(false)} company={company} getToken={getToken} />}
       {activeWorkspaceQuestion && <CodingWorkspace q={activeWorkspaceQuestion} onClose={() => setActiveWorkspaceQuestion(null)} getToken={getToken} />}
       <Toast msg={toast.msg} visible={toast.visible} />
-    </div>
+    </>
   );
 }
 

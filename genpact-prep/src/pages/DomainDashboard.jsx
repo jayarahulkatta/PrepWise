@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../AuthContext";
 import { StatCard, Toast, SkeletonCard } from "../components/ui";
+import AppLayout from "../components/layout/AppLayout";
 import QuestionCard from "../components/interview/QuestionCard";
 import { apiFetch, API_BASE } from "../utils/api";
 import { QUESTION_TYPES, EXPERIENCE_LEVELS, DIFFICULTIES } from "../utils/constants";
 import { CS_QUESTIONS } from "../utils/csSubjectsData";
 
 export default function DomainDashboard() {
-  const { user, signOut, getToken } = useAuth();
+  const { user, getToken } = useAuth();
   const [view, setView] = useState("dashboard"); // dashboard | submit | review | my-questions
   const [stats, setStats] = useState(null);
   const [allQuestions, setAllQuestions] = useState([]); // Used just for stats/job list if needed
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Pagination & Filtering
   const [questions, setQuestions] = useState([]);
@@ -196,41 +196,14 @@ export default function DomainDashboard() {
   ];
 
   return (
-    <div className="app-layout">
-      {sidebarOpen && <div className="sidebar-overlay" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 899 }} onClick={() => setSidebarOpen(false)} />}
-
-      <aside className={`app-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, paddingLeft: 4 }}>
-          <div style={{ width: 28, height: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, transform: "rotate(45deg)" }}>
-            {["#ef4444", "#2563eb", "#2563eb", "#ef4444"].map((c, i) => <span key={i} style={{ borderRadius: 3, background: c }} />)}
-          </div>
-          <span style={{ fontSize: 16, fontWeight: 700 }}>Prep<span style={{ color: "var(--red)" }}>Wise</span></span>
-        </div>
-        <div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, padding: "0 4px", marginBottom: 16, fontFamily: "var(--mono)" }}>Domain Expert</div>
-
-        {navItems.map(n => (
-          <button key={n.key} className={`nav-link ${view === n.key ? "active" : ""}`} onClick={() => { setView(n.key); setSidebarOpen(false); }}>
-            <span className="nav-icon">{n.icon}</span>{n.label}
-          </button>
-        ))}
-
-        <div style={{ marginTop: "auto", padding: "16px 4px", borderTop: "1px solid var(--border)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,var(--green),var(--blue))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, overflow: "hidden" }}>
-              {user.photoURL ? <img src={user.photoURL} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (user.displayName?.[0] || "D")}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.displayName || "Expert"}</div>
-              <div style={{ fontSize: 10, color: level.color, fontWeight: 600 }}>{level.label}</div>
-            </div>
-          </div>
-          <button onClick={signOut} style={{ width: "100%", background: "none", border: "1px solid var(--border)", color: "var(--red)", padding: "7px", borderRadius: 8, fontSize: 11, cursor: "pointer", fontFamily: "var(--font)", fontWeight: 500 }}>Sign Out</button>
-        </div>
-      </aside>
-
-      <main className="app-main">
-        <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, marginBottom: 16, color: "var(--text)" }}>☰</button>
-
+    <>
+      <AppLayout
+      navItems={navItems}
+      view={view}
+      setView={setView}
+      userRoleLabel="Domain Expert"
+      roleDetails={{ level }}
+    >
         {/* DASHBOARD */}
         {view === "dashboard" && (
           <div className="fadeUp">
@@ -408,7 +381,7 @@ export default function DomainDashboard() {
           </div>
         )}
 
-      </main>
+      </AppLayout>
       
       {/* EDIT MODAL */}
       {editingQuestion && (
@@ -454,6 +427,6 @@ export default function DomainDashboard() {
       )}
 
       <Toast msg={toast.msg} visible={toast.visible} />
-    </div>
+    </>
   );
 }

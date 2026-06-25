@@ -10,7 +10,17 @@ const connectDB = async () => {
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
-    console.warn('⚠️ Server is running without database connection. Some features will fail.');
+    console.log('🔄 Attempting to start local in-memory MongoDB as fallback...');
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const mongoServer = await MongoMemoryServer.create();
+      const uri = mongoServer.getUri();
+      const conn = await mongoose.connect(uri, { dbName: 'prepwise' });
+      console.log(`✅ In-memory MongoDB started and connected: ${conn.connection.host}`);
+    } catch (memError) {
+      console.error('❌ Failed to start in-memory MongoDB:', memError.message);
+      console.warn('⚠️ Server is running without database connection. Features like saving profiles will fail.');
+    }
   }
 };
 

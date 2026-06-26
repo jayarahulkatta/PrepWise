@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { executeCodeSimulated } = require('../sandbox');
+const { executeCode } = require('../sandbox');
 
 const codeRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -17,7 +17,7 @@ router.post('/submit', codeRateLimiter, async (req, res) => {
     if (!code || !language) return res.status(400).json({ error: 'Code and language are required' });
 
     // Using AI simulation (with disclaimer on frontend)
-    const result = await executeCodeSimulated(code, language);
+    const result = await executeCode(code, language);
     res.json(result);
   } catch (err) {
     console.error('Code execution error:', err);

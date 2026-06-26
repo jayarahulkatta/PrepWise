@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { generateAnswer, evaluateAnswer, generateDebrief } = require('../localAI');
+const { generateAnswer, evaluateAnswer, generateChatDebrief: generateDebrief } = require('../localAI');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 
 // ─── RATE LIMITING ──────────────────────────────────────────────────────────
@@ -43,9 +43,11 @@ router.post('/generate', optionalAuth, dynamicRateLimiter, async (req, res) => {
     const resumeText = req.user?.resume?.text || null;
     
     // Pass authentication status to skip relevance filter if true
+    // Pass authentication status to skip relevance filter if true
     const isAuthenticated = !!req.user;
 
-    const answer = await generateAnswer(messages, tone, questionType, role, company, resumeText, isAuthenticated);
+    const lastMessageContent = messages[messages.length - 1]?.content || "";
+    const answer = await generateAnswer(lastMessageContent, tone, questionType, role, company, resumeText, isAuthenticated);
     res.json({ text: answer });
   } catch (err) {
     console.error('AI Generate Error:', err);
@@ -63,7 +65,14 @@ router.post('/evaluate', requireAuth, dynamicRateLimiter, async (req, res) => {
     const experienceLevel = req.user?.prepProfile?.experienceLevel || 'Fresher';
     const targetRole = req.user?.prepProfile?.targetRole || 'Candidate';
 
-    const evaluation = await evaluateAnswer(messages, resumeText, experienceLevel, targetRole);
+    const lastMsgContent = messages[messages.length - 1]?.content || "";
+    const qMatch = lastMsgContent.match(/Question:\s*"(.*?)"/s) || lastMsgContent.match(/Question:\s*(.*)/);
+    const questionText = qMatch ? qMatch[1].trim() : lastMsgContent;
+    
+    const aMatch = lastMsgContent.match(/Answer:\s*"(.*?)"/s) || lastMsgContent.match(/Answer:\s*(.*)/s);
+    const answerText = aMatch ? aMatch[1].trim() : '';
+
+    const evaluation = await evaluateAnswer(questionText, answerText, 'Technical', resumeText, experienceLevel, targetRole);
     res.json(evaluation);
   } catch (err) {
     console.error('AI Evaluate Error:', err);

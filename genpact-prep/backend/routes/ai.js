@@ -43,7 +43,6 @@ router.post('/generate', optionalAuth, dynamicRateLimiter, async (req, res) => {
     const resumeText = req.user?.resume?.text || null;
     
     // Pass authentication status to skip relevance filter if true
-    // Pass authentication status to skip relevance filter if true
     const isAuthenticated = !!req.user;
 
     const lastMessageContent = messages[messages.length - 1]?.content || "";

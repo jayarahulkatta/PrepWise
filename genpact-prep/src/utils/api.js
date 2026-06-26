@@ -29,5 +29,5 @@ export async function callAI(messages, endpoint = "generate", extra = {}, signal
   const res = await fetch(`${API_BASE}/${endpoint}`, fetchOptions);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data = await res.json();
-  return data.content || data.debrief || data;
+  return data.text || data.content || data.debrief || data;
 }

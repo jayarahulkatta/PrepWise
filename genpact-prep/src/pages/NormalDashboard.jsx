@@ -537,7 +537,7 @@ export default function NormalDashboard() {
       </AppLayout>
 
       {/* MODALS */}
-      {showMock && <MockInterview onClose={() => { setShowMock(false); setView("history"); }} company={company} getToken={getToken} stats={stats} />}
+      {showMock && <MockInterview onClose={() => { setShowMock(false); setView("history"); }} allQuestions={allQuestions} company={company} getToken={getToken} stats={stats} />}
       {showChat && <ChatSimulator onClose={() => { setShowChat(false); setView("history"); }} company={company} getToken={getToken} stats={stats} />}
       {activeWorkspaceQuestion && <CodingWorkspace q={activeWorkspaceQuestion} onClose={() => setActiveWorkspaceQuestion(null)} getToken={getToken} />}
       <Toast msg={toast.msg} visible={toast.visible} />

@@ -52,7 +52,7 @@ function cleanForSpeech(text) {
 
 export default function QuestionCard({ q, bookmarked, liked, onBookmark, onLike, onDelete, onEdit, onDuplicate, selectable, selected, onSelect, showToast, userRole, isCodingQuestion, onOpenWorkspace }) {
   const { role, getToken } = useAuth();
-  const isExpert = role === "domain_expert";
+  const isExpert = role === "domain";
 
   const [answer, setAnswer] = useState(null);
   const [generating, setGenerating] = useState(false);

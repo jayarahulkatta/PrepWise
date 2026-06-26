@@ -25,7 +25,7 @@ export default function AuthPage({ initialMode: initialModeProp, onBack }) {
 
   // Use prop if provided (from landing page CTA), else fall back to logout-role logic
   const resolvedInitialMode = initialModeProp
-    || (lastLogoutRoleRef?.current === "domain_expert" ? "domain" : "login");
+    || (lastLogoutRoleRef?.current === "domain" ? "domain" : "login");
   const [mode, setMode] = useState(resolvedInitialMode);
 
   const [email, setEmail] = useState("");

@@ -8,13 +8,15 @@ if (!admin.apps.length) {
   });
 }
 
-// Domain user email — auto-assigned domain role
-const DOMAIN_EMAIL = 'jayarahul696@gmail.com';
+const DomainAllowlist = require('../models/DomainAllowlist');
 
 // Find or create user in MongoDB from Firebase token
 async function findOrCreateUser(decoded) {
   const email = (decoded.email || '').toLowerCase().trim();
-  const isDomain = email === DOMAIN_EMAIL;
+  
+  // Check if email is in the domain allowlist
+  const allowlistEntry = await DomainAllowlist.findOne({ email });
+  const isDomain = !!allowlistEntry;
 
   let user = await User.findOne({ firebaseUid: decoded.uid });
   if (!user) {
@@ -27,8 +29,12 @@ async function findOrCreateUser(decoded) {
       onboardingComplete: false,
     });
   } else if (isDomain && user.role !== 'domain') {
-    // Upgrade existing user to domain if email matches
+    // Upgrade existing user to domain if email was added to allowlist
     user.role = 'domain';
+    await user.save();
+  } else if (!isDomain && user.role === 'domain') {
+    // Downgrade if removed from allowlist (safety check)
+    user.role = 'normal';
     await user.save();
   }
   return user;

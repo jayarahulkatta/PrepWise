@@ -12,8 +12,9 @@ import CodingWorkspace from "../components/interview/CodingWorkspace";
 import { CS_SUBJECTS, CS_QUESTIONS, JAVA_DSA_TOPICS } from "../utils/csSubjectsData";
 
 export default function NormalDashboard() {
-  const { user, getToken } = useAuth();
+  const { user, profile: authProfile, getToken } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [stats, setStats] = useState(null);
   // No isDomain check — this dashboard is exclusively for interview prep users.
   // Domain experts are routed to DomainDashboard by App.jsx.
   const [view, setView] = useState("dashboard"); // dashboard | practice | history | saved | cs_subjects
@@ -58,17 +59,22 @@ export default function NormalDashboard() {
   const toastRef = useRef(null);
   const showToast = useCallback(msg => { clearTimeout(toastRef.current); setToast({ msg, visible: true }); toastRef.current = setTimeout(() => setToast(t => ({ ...t, visible: false })), 2500); }, []);
 
-  const company = "Genpact";
+  // ─── DYNAMIC COMPANY ────────────────────────────────────────────────────────
+  const company = authProfile?.prepProfile?.targetCompany || "Genpact";
 
-  // Load profile
+  // Load profile and stats
   useEffect(() => {
     (async () => {
       try {
         const token = await getToken();
+        // Load profile
         const p = await apiFetch(`${API_BASE}/user/profile`, {}, token);
         setProfile(p);
         setBookmarks(new Set(p.bookmarks));
         setLikes(new Set(p.likes));
+        // Load stats
+        const s = await apiFetch(`${API_BASE}/user/stats`, {}, token);
+        setStats(s);
       } catch { }
     })();
   }, [getToken]);
@@ -233,11 +239,17 @@ export default function NormalDashboard() {
               </h1>
               <p style={{ fontSize: 14, color: "var(--muted)" }}>
                 {profile?.prepProfile?.targetRole ? `Preparing for ${profile.prepProfile.targetRole} at Genpact` : "Your AI interview coach"}
+                {profile?.prepProfile?.targetRole ? `Preparing for ${profile.prepProfile.targetRole} at ${company}` : "Your AI interview coach"}
                 {daysLeft && <span style={{ color: "var(--yellow)", fontWeight: 600 }}> · {daysLeft} days until interview</span>}
               </p>
             </div>
 
             {/* Stats */}
+            <div className="section-subtitle">
+              {stats?.weakAreas?.length > 0 
+                ? `Coaching Nudge: Your ${stats.weakAreas[0].replace(/([A-Z])/g, ' $1').toLowerCase()} could use some work. Try a mock interview!`
+                : "Your AI interview coach is ready."}
+            </div>
             <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
               <StatCard value={profile?.readinessScore || 0} label="Readiness" color={scoreColor(profile?.readinessScore || 0)} icon="🎯" />
               <StatCard value={profile?.totalPracticeSessions || 0} label="Sessions" color="var(--blue-bright)" icon="📝" />
@@ -292,7 +304,7 @@ export default function NormalDashboard() {
             {/* Company info */}
             {companyMeta && (
               <div className="card-hover" style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 20 }}>
-                <h3 style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--muted)", marginBottom: 16, fontFamily: "var(--mono)" }}>Genpact Interview Process</h3>
+                <h3 style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--muted)", marginBottom: 16, fontFamily: "var(--mono)" }}>{company} Interview Process</h3>
                 {companyMeta.process?.map(({ n, h, p }) => (
                   <div key={n} style={{ display: "flex", gap: 12, paddingBottom: 14, marginBottom: 14, borderBottom: "1px solid var(--border)" }}>
                     <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--blue-dim)", border: "1px solid rgba(59,130,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "var(--blue)", fontFamily: "var(--mono)", flexShrink: 0 }}>{n}</div>
@@ -308,7 +320,7 @@ export default function NormalDashboard() {
         {view === "practice" && (
           <div className="fadeUp">
             <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.5px", marginBottom: 4 }}>Question Bank</h1>
-            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>Real interview questions from Genpact interviews</p>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>Real interview questions from {company} interviews</p>
 
             {/* Filters */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
@@ -525,8 +537,8 @@ export default function NormalDashboard() {
       </AppLayout>
 
       {/* MODALS */}
-      {showMock && <MockInterview onClose={() => setShowMock(false)} allQuestions={allQuestions} company={company} getToken={getToken} onSessionSaved={reloadProfile} />}
-      {showChat && <ChatSimulator onClose={() => setShowChat(false)} company={company} getToken={getToken} />}
+      {showMock && <MockInterview onClose={() => { setShowMock(false); setView("history"); }} company={company} getToken={getToken} stats={stats} />}
+      {showChat && <ChatSimulator onClose={() => { setShowChat(false); setView("history"); }} company={company} getToken={getToken} stats={stats} />}
       {activeWorkspaceQuestion && <CodingWorkspace q={activeWorkspaceQuestion} onClose={() => setActiveWorkspaceQuestion(null)} getToken={getToken} />}
       <Toast msg={toast.msg} visible={toast.visible} />
     </>

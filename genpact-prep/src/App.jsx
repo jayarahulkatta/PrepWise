@@ -1,14 +1,15 @@
 
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth, ROLE_DOMAIN_EXPERT } from "./AuthContext";
+import { AuthProvider, useAuth, ROLE_DOMAIN } from "./AuthContext";
 import AuthPage from "./AuthPage";
 import NormalDashboard from "./pages/NormalDashboard";
 import DomainDashboard from "./pages/DomainDashboard";
+import OnboardingPage from "./pages/OnboardingPage";
 import LandingPage from "./pages/LandingPage";
 import "./styles/index.css";
 
 function AppRoutes() {
-  const { user, loading, role } = useAuth();
+  const { user, loading, role, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,10 +47,19 @@ function AppRoutes() {
     );
   }
 
-  // Signed in — go straight to dashboard, no onboarding gate
+  // Signed in but onboarding not complete — gate to onboarding
+  if (profile && !profile.onboardingComplete) {
+    return (
+      <OnboardingPage onComplete={async () => {
+        await refreshProfile();
+      }} />
+    );
+  }
+
+  // Signed in + onboarded — route to appropriate dashboard
   return (
     <Routes>
-      <Route path="/" element={role === ROLE_DOMAIN_EXPERT ? <DomainDashboard /> : <NormalDashboard />} />
+      <Route path="/" element={role === ROLE_DOMAIN ? <DomainDashboard /> : <NormalDashboard />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -64,3 +74,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+

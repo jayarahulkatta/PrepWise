@@ -251,15 +251,20 @@ export default function CodingWorkspace({ q, onClose, getToken }) {
             </div>
 
             {/* Bottom Panel Actions */}
-            <div style={{ paddingTop: 16, borderTop: "1px solid var(--border)", display: "flex", justifyContent: "flex-end" }}>
-              <Chip variant="primary" onClick={handleSubmit} disabled={status === "running" || !code.trim()} style={{ background: "var(--blue)", padding: "10px 24px", fontSize: 14 }}>
-                {status === "running" ? <><Spinner /> Compiling...</> : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Run & Evaluate
-                  </>
-                )}
-              </Chip>
+            <div style={{ paddingTop: 16, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 8 }}>
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                ⚠️ Execution output is AI-estimated, not from a real compiler
+              </span>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <Chip variant="primary" onClick={handleSubmit} disabled={status === "running" || !code.trim()} style={{ background: "var(--blue)", padding: "10px 24px", fontSize: 14 }}>
+                  {status === "running" ? <><Spinner /> Compiling...</> : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      Run & Evaluate
+                    </>
+                  )}
+                </Chip>
+              </div>
             </div>
 
           </div>

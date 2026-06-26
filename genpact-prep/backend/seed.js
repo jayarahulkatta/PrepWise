@@ -93,7 +93,13 @@ async function seed() {
 
   // Clear existing data
   await Question.deleteMany({});
-  console.log('🗑️  Cleared existing questions');
+  const DomainAllowlist = require('./models/DomainAllowlist');
+  await DomainAllowlist.deleteMany({});
+  console.log('🗑️  Cleared existing questions and allowlist');
+
+  // Seed initial domain expert
+  await DomainAllowlist.create({ email: 'jayarahul696@gmail.com', addedBy: 'system' });
+  console.log('✅ Seeded initial domain expert: jayarahul696@gmail.com');
 
   // Insert seed data with status: approved
   const questions = SEED_DATA.map(q => ({ ...q, status: 'approved' }));

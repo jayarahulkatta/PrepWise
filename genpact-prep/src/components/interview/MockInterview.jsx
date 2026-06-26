@@ -3,7 +3,7 @@ import { Badge, Spinner, TypingDots, ScoreBar } from "../ui";
 import { callAI, apiFetch, API_BASE } from "../../utils/api";
 import { SCORE_AXES, scoreColor, readinessLabel } from "../../utils/constants";
 
-export default function MockInterview({ onClose, allQuestions, company, getToken, onSessionSaved }) {
+export default function MockInterview({ onClose, allQuestions, company, getToken, onSessionSaved, stats }) {
   const [phase, setPhase] = useState("setup");
   const [role, setRole] = useState("");
   const [timeLimit, setTimeLimit] = useState(180);
@@ -13,6 +13,7 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
   const [userAnswer, setUserAnswer] = useState("");
   const [timeLeft, setTimeLeft] = useState(180);
   const [feedback, setFeedback] = useState(null);
+  const [modelAnswer, setModelAnswer] = useState(null);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
   const [scores, setScores] = useState([]);
   const [sessionStart, setSessionStart] = useState(null);
@@ -44,8 +45,23 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
   const start = () => {
     let pool = role ? allQuestions.filter(q => q.job === role) : allQuestions;
     if (pool.length < count) pool = allQuestions;
-    setQuestions(shuffle(pool).slice(0, count));
-    setIdx(0); setUserAnswer(""); setFeedback(null); setScores([]); setSkippedCount(0);
+
+    // Weighted question selection algorithm
+    // Prioritizes: 1. Weak areas, 2. Questions not yet attempted, 3. Random variety
+    const weakAreas = stats?.weakAreas || [];
+    const weightedPool = [...pool].sort((a, b) => {
+      const aIsWeak = weakAreas.some(w => a.type && w.toLowerCase().includes(a.type.toLowerCase())) ? 2 : 0;
+      const bIsWeak = weakAreas.some(w => b.type && w.toLowerCase().includes(b.type.toLowerCase())) ? 2 : 0;
+      const aUntried = (a.attempts || 0) === 0 ? 1 : 0;
+      const bUntried = (b.attempts || 0) === 0 ? 1 : 0;
+      
+      const aScore = aIsWeak + aUntried + Math.random();
+      const bScore = bIsWeak + bUntried + Math.random();
+      return bScore - aScore;
+    });
+
+    setQuestions(weightedPool.slice(0, count));
+    setIdx(0); setUserAnswer(""); setFeedback(null); setModelAnswer(null); setScores([]); setSkippedCount(0);
     setTimeLeft(timeLimit); setSessionStart(Date.now()); setPhase("active");
   };
 
@@ -77,6 +93,15 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
       const scoreEntry = { ...parsed, qid: q.id, questionText: q.text, skipped: false };
       setScores(prev => [...prev, scoreEntry]);
       setFeedback(parsed);
+
+      // Generate Model Answer
+      try {
+        const ma = await callAI([{ role: "user", content: q.text }], "generate", { tone: "technical", type: q.type, role: q.job, company }, null, token);
+        setModelAnswer(ma?.text || ma);
+      } catch (e) {
+        setModelAnswer("Model answer generation failed.");
+      }
+
     } catch {
       const fb = {
         technicalAccuracy: 50, communicationClarity: 50, structureOrganization: 50,
@@ -104,14 +129,34 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
 
   const redraft = () => {
     setFeedback(null);
+    setModelAnswer(null);
     // remove previous score for this question
     setScores(prev => prev.filter(s => s.qid !== questions[idx].id));
     setTimeLeft(timeLimit);
   };
 
   const next = () => {
+    // 30% chance to ask a follow-up based on the weakness identified
+    if (!questions[idx].isFollowUp && Math.random() < 0.3 && feedback?.improvements?.[0]?.practicePrompt) {
+      const followUpQ = {
+        id: `followup-${Date.now()}`,
+        text: `Follow-up: ${feedback.improvements[0].practicePrompt}`,
+        job: questions[idx].job,
+        type: questions[idx].type,
+        diff: "Follow-up",
+        isFollowUp: true
+      };
+      
+      const newQuestions = [...questions];
+      newQuestions.splice(idx + 1, 0, followUpQ);
+      setQuestions(newQuestions);
+      
+      setIdx(idx + 1); setUserAnswer(""); setFeedback(null); setModelAnswer(null); setTimeLeft(timeLimit);
+      return;
+    }
+
     if (idx + 1 >= questions.length) { handleResults(); return; }
-    setIdx(idx + 1); setUserAnswer(""); setFeedback(null); setTimeLeft(timeLimit);
+    setIdx(idx + 1); setUserAnswer(""); setFeedback(null); setModelAnswer(null); setTimeLeft(timeLimit);
   };
 
   const handleResults = async () => {
@@ -235,6 +280,15 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
             <div style={{ padding: 14, background: "var(--blue-dim)", borderRadius: 12, border: "1px solid rgba(37,99,235,0.2)", marginTop: 8 }}>
               <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text)", fontWeight: 500 }}>"{feedback.feedback}"</p>
             </div>
+            
+            {/* Model Answer */}
+            {modelAnswer && (
+              <div style={{ marginTop: 16, padding: 16, background: "var(--card)", borderRadius: 12, border: "1px solid var(--border)" }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>Model Answer</span>
+                <p style={{ fontSize: 13, color: "var(--text2)", marginTop: 8, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{modelAnswer}</p>
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
               <button className="btn-glow" onClick={next} style={{ ...primaryBtn, flex: 2 }}>{idx + 1 >= questions.length ? "See Results" : "Next Question →"}</button>
               <button className="btn-secondary-hover" onClick={redraft} style={{ ...secondaryBtn, flex: 1, minWidth: 120 }}>✍️ Retry Answer</button>
@@ -260,9 +314,24 @@ export default function MockInterview({ onClose, allQuestions, company, getToken
           {/* 6-axis breakdown */}
           <div style={{ marginBottom: 24, padding: 20, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16 }}>
             <h3 style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--muted)", marginBottom: 16, fontFamily: "var(--mono)" }}>Score Breakdown</h3>
-            {SCORE_AXES.map(a => (
-              <ScoreBar key={a.key} value={avg(a.key)} color={scoreColor(avg(a.key))} label={a.label} icon={a.icon} />
-            ))}
+            {SCORE_AXES.map(a => {
+              const currentScore = avg(a.key);
+              const pastScore = stats?.axisAverages?.[a.key];
+              const diff = pastScore ? currentScore - pastScore : 0;
+              const diffEl = diff > 0 
+                ? <span style={{ color: "var(--green)", fontSize: 11, marginLeft: 8 }}>↑ +{diff}</span>
+                : diff < 0 ? <span style={{ color: "var(--red)", fontSize: 11, marginLeft: 8 }}>↓ {diff}</span>
+                : <span style={{ color: "var(--muted)", fontSize: 11, marginLeft: 8 }}>→</span>;
+
+              return (
+                <div key={a.key} style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ flex: 1 }}>
+                    <ScoreBar value={currentScore} color={scoreColor(currentScore)} label={a.label} icon={a.icon} />
+                  </div>
+                  {pastScore > 0 && <div style={{ width: 40, textAlign: "right", paddingBottom: 10 }}>{diffEl}</div>}
+                </div>
+              );
+            })}
           </div>
 
           {/* Best & Worst */}

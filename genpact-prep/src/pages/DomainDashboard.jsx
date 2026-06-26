@@ -3,15 +3,18 @@ import { useAuth } from "../AuthContext";
 import { StatCard, Toast, SkeletonCard } from "../components/ui";
 import AppLayout from "../components/layout/AppLayout";
 import QuestionCard from "../components/interview/QuestionCard";
+import MockInterview from "../components/interview/MockInterview";
 import { apiFetch, API_BASE } from "../utils/api";
 import { QUESTION_TYPES, EXPERIENCE_LEVELS, DIFFICULTIES } from "../utils/constants";
 import { CS_QUESTIONS } from "../utils/csSubjectsData";
 
 export default function DomainDashboard() {
   const { user, getToken } = useAuth();
-  const [view, setView] = useState("dashboard"); // dashboard | submit | review | my-questions
+  const [view, setView] = useState("dashboard"); // dashboard | submit | my-questions | simulate | reviews
   const [stats, setStats] = useState(null);
   const [allQuestions, setAllQuestions] = useState([]); // Used just for stats/job list if needed
+  const [showMock, setShowMock] = useState(false);
+  const [redactedSessions, setRedactedSessions] = useState([]);
 
   // Pagination & Filtering
   const [questions, setQuestions] = useState([]);
@@ -95,6 +98,16 @@ export default function DomainDashboard() {
   useEffect(() => {
     apiFetch(`${API_BASE}/questions/all?company=Genpact`).then(setAllQuestions).catch(() => {});
   }, []);
+
+  // Load redacted sessions for reviews
+  useEffect(() => {
+    if (view !== "reviews") return;
+    setLoaded(false);
+    apiFetch(`${API_BASE}/user/domain-sessions`, {}, getToken).then(data => {
+      setRedactedSessions(data.sessions || []);
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
+  }, [view, getToken]);
 
   // Delete handler
   const handleDelete = useCallback(async (id) => {
@@ -193,6 +206,8 @@ export default function DomainDashboard() {
     { key: "dashboard", icon: "📊", label: "Dashboard" },
     { key: "submit", icon: "📝", label: "Submit Question" },
     { key: "my-questions", icon: "📚", label: "Question Bank" },
+    { key: "simulate", icon: "🎭", label: "Simulate Interview" },
+    { key: "reviews", icon: "🔍", label: "Performance Review" },
   ];
 
   return (
@@ -229,14 +244,24 @@ export default function DomainDashboard() {
               </div>
             </div>
 
-            {/* Quick submit CTA */}
-            <button className="card-hover" onClick={() => setView("submit")} style={{ width: "100%", padding: 24, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 32 }}>📝</div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Submit a New Question</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Share a real interview question from your experience</div>
-              </div>
-            </button>
+            {/* Quick action CTAs */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+              <button className="card-hover" onClick={() => setView("submit")} style={{ padding: 24, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ fontSize: 32 }}>📝</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Submit a New Question</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Share a real interview question from your experience</div>
+                </div>
+              </button>
+              
+              <button className="card-hover" onClick={() => { setView("simulate"); setShowMock(true); }} style={{ padding: 24, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ fontSize: 32 }}>🎭</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Simulate Interview</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Test your questions as a candidate</div>
+                </div>
+              </button>
+            </div>
           </div>
         )}
 
@@ -381,7 +406,42 @@ export default function DomainDashboard() {
           </div>
         )}
 
+        {/* SIMULATE INTERVIEW */}
+        {view === "simulate" && (
+          <div className="fadeUp">
+            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.5px", marginBottom: 4 }}>Simulate Interview</h1>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 28 }}>Experience the mock interview platform as a candidate.</p>
+            <button className="btn-glow" onClick={() => setShowMock(true)} style={{ padding: "14px 28px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, var(--blue), #2563eb)", color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: "var(--font)", cursor: "pointer" }}>Start Simulation Session</button>
+          </div>
+        )}
+
+        {/* REVIEWS */}
+        {view === "reviews" && (
+          <div className="fadeUp">
+            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.5px", marginBottom: 4 }}>Performance Review</h1>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 28 }}>Analyze anonymized candidate sessions to identify patterns.</p>
+            {!loaded ? [0, 1].map(i => <div key={i} style={{ marginBottom: 16, animation: `fadeUp 0.4s ease ${i * 100}ms both` }}><SkeletonCard /></div>) :
+              redactedSessions.length === 0 ? <div style={{ textAlign: "center", padding: 60, color: "var(--muted)" }}><p>No session data available yet.</p></div> :
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {redactedSessions.map((session, i) => (
+                  <div key={session._id || i} style={{ padding: 24, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700 }}>Candidate: {session.candidateId || "Redacted"}</span>
+                      <span style={{ fontSize: 12, color: "var(--muted)" }}>{new Date(session.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 16 }}>
+                      Role: {session.role} | Score: {session.overallScore}/100 | Questions: {session.questionsAttempted}
+                    </div>
+                    {/* Could expand to show detailed question answers */}
+                  </div>
+                ))}
+              </div>}
+          </div>
+        )}
+
       </AppLayout>
+      
+      {showMock && <MockInterview onClose={() => setShowMock(false)} allQuestions={allQuestions} company="Genpact" getToken={getToken} />}
       
       {/* EDIT MODAL */}
       {editingQuestion && (

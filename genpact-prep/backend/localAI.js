@@ -19,8 +19,8 @@ try {
   AICache = null;
 }
 
-function hashQuestion(text, type, company, role) {
-  return crypto.createHash('md5').update(`${text}|${type}|${company}|${role}`).digest('hex');
+function hashQuestion(text, type, company, role, tone) {
+  return crypto.createHash('md5').update(`${text}|${type}|${company}|${role}|${tone}`).digest('hex');
 }
 
 async function getCachedAnswer(hash) {
@@ -112,18 +112,22 @@ function isRelevantInterviewQuestion(text) {
 }
 
 // ─── MAIN GENERATOR (CACHE → GEMINI → GROQ → LOCAL) ────────────────────────
-async function generateAnswer(questionText, type = 'Technical', tone = 'confident', role = '', company = 'Genpact', resumeText = '') {
+async function generateAnswer(questionText, type = 'Technical', tone = 'confident', role = '', company = 'Genpact', resumeText = '', isAuthenticated = false) {
   let extractedQuestion = extractQuestionText(questionText);
+  const truncatedResume = resumeText ? resumeText.slice(0, 1500) : '';
 
-  // TOKEN OPTIMIZATION: Block random/irrelevant questions locally.
-  if (!isRelevantInterviewQuestion(extractedQuestion)) {
+  // TOKEN OPTIMIZATION: Block random/irrelevant questions locally (only for guests).
+  if (!isAuthenticated && !isRelevantInterviewQuestion(extractedQuestion)) {
     return "This question does not appear to be related to web applications, technology, or general interview preparation. To efficiently utilize AI tokens, please ask an interview-related question.";
   }
 
-  const cacheHash = hashQuestion(extractedQuestion, type, company, role);
+  const cacheHash = hashQuestion(extractedQuestion, type, company, role, tone);
 
-  const cached = await getCachedAnswer(cacheHash);
-  if (cached) return cached;
+  // Skip cache entirely if we are personalizing with a resume
+  if (!truncatedResume) {
+    const cached = await getCachedAnswer(cacheHash);
+    if (cached) return cached;
+  }
 
   const TONE_GUIDES = {
     confident: "Speak with confidence. Use 'I\\'ve found that...' and 'In my experience...'",
@@ -144,8 +148,8 @@ If it is a behavioral question, structure your answer using the STAR (Situation,
 Do NOT use markdown formatting like ** or ## in your answer. Use plain text only.
 Write as someone would SPEAK — conversational, 150-220 words.`;
 
-  if (resumeText) {
-    systemPrompt += `\n\nIMPORTANT: Use the candidate's actual resume below to tailor the answer. Reference their specific projects, skills, and experience to make the answer personalized and highly realistic.\n\n--- CANDIDATE RESUME ---\n${resumeText}\n------------------------\n`;
+  if (truncatedResume) {
+    systemPrompt += `\n\nIMPORTANT: Use the candidate's actual resume below to tailor the answer. Reference their specific projects, skills, and experience to make the answer personalized and highly realistic.\n\n--- CANDIDATE RESUME ---\n${truncatedResume}\n------------------------\n`;
   }
 
   let fullGeminiPrompt = `${systemPrompt}\n\nQuestion: ${extractedQuestion}`;
@@ -161,7 +165,7 @@ Write as someone would SPEAK — conversational, 150-220 words.`;
   try {
     const answer = await generateWithGemini(fullGeminiPrompt);
     if (answer) {
-      await setCachedAnswer(cacheHash, extractedQuestion, type, company, role, answer, 'gemini');
+      if (!truncatedResume) await setCachedAnswer(cacheHash, extractedQuestion, type, company, role, answer, 'gemini');
       return answer;
     }
   } catch (err) {
@@ -172,7 +176,7 @@ Write as someone would SPEAK — conversational, 150-220 words.`;
   try {
     const answer = await generateWithGroq(systemPrompt, extractedQuestion);
     if (answer) {
-      await setCachedAnswer(cacheHash, extractedQuestion, type, company, role, answer, 'groq');
+      if (!truncatedResume) await setCachedAnswer(cacheHash, extractedQuestion, type, company, role, answer, 'groq');
       return answer;
     }
   } catch (err) {
@@ -181,7 +185,7 @@ Write as someone would SPEAK — conversational, 150-220 words.`;
 
   // Local fallback
   const localAnswer = generateLocally(extractedQuestion, type, company);
-  await setCachedAnswer(cacheHash, extractedQuestion, type, company, role, localAnswer, 'local');
+  if (!truncatedResume) await setCachedAnswer(cacheHash, extractedQuestion, type, company, role, localAnswer, 'local');
   return localAnswer;
 }
 
@@ -200,30 +204,42 @@ const evaluationSchema = z.object({
     area: z.string(),
     issue: z.string(),
     suggestion: z.string(),
+    practicePrompt: z.string(),
   })),
   feedback: z.string(),
 });
 
-async function evaluateAnswer(questionText, answerText, type = 'Technical', resumeText = '') {
+async function evaluateAnswer(questionText, answerText, type = 'Technical', resumeText = '', experienceLevel = 'Fresher', targetRole = 'Candidate') {
   if (!answerText || answerText.trim().length === 0) {
     return {
       technicalAccuracy: 10, communicationClarity: 10, structureOrganization: 10,
       depthOfExamples: 10, roleRelevance: 10, overallImpression: 10,
       feedback: "No answer was provided.",
       strengths: [],
-      improvements: [{ area: "Completeness", issue: "No answer given", suggestion: "Try to provide at least a partial answer." }],
+      improvements: [{ 
+        area: "Completeness", 
+        issue: "No answer given", 
+        suggestion: "Try to provide at least a partial answer.",
+        practicePrompt: "Try answering this question again, even if you just outline your thoughts."
+      }],
     };
   }
 
+  const truncatedResume = resumeText ? resumeText.slice(0, 1500) : '';
+
   let evalPrompt = `You are a strict but fair senior technical interviewer. Evaluate the candidate's answer using 6 axes.
+  
+IMPORTANT CALIBRATION:
+This candidate is a ${experienceLevel} applying for a ${targetRole} role. 
+Calibrate your scoring to this level. A perfect answer for a Fresher is different from a perfect answer for a Senior. Hold Seniors to a higher standard of depth and trade-offs.
 
 Question: "${questionText}"
 Question Type: ${type}
 Candidate's Answer: "${answerText}"
 `;
 
-  if (resumeText) {
-    evalPrompt += `\nCandidate's Resume Context (use this to check if their examples align with their real experience):\n${resumeText}\n`;
+  if (truncatedResume) {
+    evalPrompt += `\nCandidate's Resume Context (use this to check if their examples align with their real experience):\n${truncatedResume}\n`;
   }
 
   evalPrompt += `\nReturn ONLY valid JSON (no markdown, no code blocks):
@@ -239,7 +255,8 @@ Candidate's Answer: "${answerText}"
     {
       "area": "area name",
       "issue": "what was wrong (1 sentence)",
-      "suggestion": "how to fix it (1-2 sentences)"
+      "suggestion": "how to fix it (1-2 sentences)",
+      "practicePrompt": "A specific follow-up question they should practice to fix this weakness"
     }
   ],
   "feedback": "2-3 sentence coaching summary"

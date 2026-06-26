@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth, ROLE_DOMAIN_EXPERT } from "../AuthContext";
+import { useAuth, ROLE_DOMAIN } from "../AuthContext";
 import { apiFetch, API_BASE } from "../utils/api";
 import { EXPERIENCE_LEVELS } from "../utils/constants";
 
@@ -10,7 +10,7 @@ export default function OnboardingPage({ onComplete }) {
   // The role is already set from the auth flow (interviewer or domain_expert).
   // Domain experts skip the role selection step entirely and go straight to 
   // the domain profile form. Interviewers do the same for their profile.
-  const isDomainExpert = role === ROLE_DOMAIN_EXPERT;
+  const isDomainExpert = role === ROLE_DOMAIN;
 
   // If role is set, skip step 1 (role selection) and go directly to step 2
   const [step, setStep] = useState(role ? 2 : 1);

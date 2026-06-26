@@ -3,7 +3,7 @@ import { TypingDots, ScoreBar } from "../ui";
 import { callAI, apiFetch, API_BASE } from "../../utils/api";
 import { scoreColor } from "../../utils/constants";
 
-export default function ChatSimulator({ onClose, company, getToken }) {
+export default function ChatSimulator({ onClose, company, getToken, stats }) {
   const [messages, setMessages] = useState([{
     role: "ai",
     text: `Hi! I'm your ${company || "company"} interviewer today. Tell me about yourself and why you're interested in ${company || "this role"}?`
@@ -21,7 +21,12 @@ export default function ChatSimulator({ onClose, company, getToken }) {
     const text = input.trim(); if (!text || loading) return; setInput("");
     const updated = [...messages, { role: "user", text }]; setMessages(updated); setLoading(true);
     const apiMsgs = updated.map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.text }));
-    const sys = `You are a professional ${company || "company"} interviewer for a software/analyst role.\nRules:\n- Stay in character, never say you're AI\n- Ask ONE follow-up based on what candidate said\n- Be encouraging but probe deeper\n- After 5-7 exchanges, conclude and give initial impressions\n- Keep to 2-4 sentences\n- React specifically to what was said`;
+    
+    // Inject coaching context
+    const weakAreasTxt = stats?.weakAreas?.length > 0 ? stats.weakAreas.map(w => w.replace(/([A-Z])/g, ' $1').toLowerCase()).join(', ') : 'none identified yet';
+    const contextPrompt = stats ? `\nContext about this candidate: Readiness score is ${stats.readinessScore || 0}/100. Their weak areas are: ${weakAreasTxt}. Probe these areas.` : '';
+    
+    const sys = `You are a professional ${company || "company"} interviewer for a software/analyst role.\nRules:\n- Stay in character, never say you're AI\n- Ask ONE follow-up based on what candidate said\n- Be encouraging but probe deeper\n- After 5-7 exchanges, conclude and give initial impressions\n- Keep to 2-4 sentences\n- React specifically to what was said${contextPrompt}`;
     try {
       const token = await getToken();
       const reply = await callAI([{ role: "system", content: sys }, { role: "assistant", content: "Understood." }, ...apiMsgs], "generate", {}, null, token);

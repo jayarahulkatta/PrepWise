@@ -15,12 +15,11 @@ import { apiFetch, API_BASE } from "./utils/api";
 const AuthContext = createContext(null);
 
 // ─── ROLE CONSTANTS ─────────────────────────────────────────────────────────
-// Role values used throughout the app. Change these when integrating real backend auth.
-const ROLE_INTERVIEWER = "interviewer";
-const ROLE_DOMAIN_EXPERT = "domain_expert";
-const ROLE_STORAGE_KEY = "prepwise_role";
+// Role values used throughout the app — matches the database schema exactly.
+const ROLE_NORMAL = "normal";
+const ROLE_DOMAIN = "domain";
 
-export { ROLE_INTERVIEWER, ROLE_DOMAIN_EXPERT };
+export { ROLE_NORMAL, ROLE_DOMAIN };
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -28,46 +27,32 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   // ─── ROLE STATE ─────────────────────────────────────────────────────────────
-  // role: "interviewer" | "domain_expert" | null
-  // Persisted in localStorage so it survives page refresh.
-  const [role, setRole] = useState(() => {
-    // Restore role from localStorage on mount
-    return localStorage.getItem(ROLE_STORAGE_KEY) || null;
-  });
+  // role: "normal" | "domain" | null
+  // Role is determined by the server profile, NOT localStorage.
+  const [role, setRole] = useState(null);
 
   // Track which role was active at logout so the login page can auto-select the right tab
   const lastLogoutRoleRef = useRef(null);
-
-  // Helper: persist role to localStorage
-  const persistRole = (newRole) => {
-    setRole(newRole);
-    if (newRole) {
-      localStorage.setItem(ROLE_STORAGE_KEY, newRole);
-    } else {
-      localStorage.removeItem(ROLE_STORAGE_KEY);
-    }
-  };
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         setUser(fbUser);
-        // If role is already set from localStorage, keep it. 
-        // If not (shouldn't happen normally), default to interviewer.
-        if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
-          persistRole(ROLE_INTERVIEWER);
-        }
+        // Always fetch profile from server — role is determined server-side
         try {
           const token = await getIdToken(fbUser);
           const p = await apiFetch(`${API_BASE}/user/profile`, {}, token);
           setProfile(p);
+          // Role comes from the server profile, never from client storage
+          setRole(p.role || ROLE_NORMAL);
         } catch {
           setProfile(null);
+          setRole(ROLE_NORMAL);
         }
       } else {
         setUser(null);
         setProfile(null);
-        // Don't clear role here — it's cleared explicitly in signOut
+        setRole(null);
       }
       setLoading(false);
     });
@@ -96,9 +81,6 @@ export function AuthProvider({ children }) {
     // Remember which role was active before logout
     lastLogoutRoleRef.current = role;
 
-    // Clear all persisted state
-    localStorage.removeItem(ROLE_STORAGE_KEY);
-
     await fbSignOut(auth);
     setUser(null);
     setProfile(null);
@@ -106,20 +88,18 @@ export function AuthProvider({ children }) {
   };
 
   // ─── DOMAIN EXPERT LOGIN ───────────────────────────────────────────────────
+  // Role will be set from server profile after onAuthStateChanged fires
   const signInAsDomain = async (email, password) => {
-    persistRole(ROLE_DOMAIN_EXPERT);
     return await signInWithEmailAndPassword(auth, email, password);
   };
 
   // ─── STANDARD USER LOGIN ───────────────────────────────────────────────────
-  // All standard auth methods set role = "interviewer"
+  // Role will be set from server profile after onAuthStateChanged fires
   const signInWithEmail = async (email, password) => {
-    persistRole(ROLE_INTERVIEWER);
     return await signInWithEmailAndPassword(auth, email, password);
   };
 
   const signUpWithEmail = async (email, password, name) => {
-    persistRole(ROLE_INTERVIEWER);
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     if (userCredential.user) {
       await updateProfile(userCredential.user, { displayName: name });
@@ -129,7 +109,6 @@ export function AuthProvider({ children }) {
   };
 
   const signInWithGoogle = async () => {
-    persistRole(ROLE_INTERVIEWER);
     const provider = new GoogleAuthProvider();
     return await signInWithPopup(auth, provider);
   };

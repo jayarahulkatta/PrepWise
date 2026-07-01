@@ -36,13 +36,16 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
+        <Route path="/" element={
+          <LandingPage onNavigate={(mode) => navigate(`/auth?mode=${mode}`)} />
+        } />
         <Route path="/auth" element={
           <AuthPage 
             initialMode={new URLSearchParams(location.search).get("mode") || "login"} 
             onBack={() => navigate("/")} 
           />
         } />
-        <Route path="*" element={<Navigate to="/auth" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
   }

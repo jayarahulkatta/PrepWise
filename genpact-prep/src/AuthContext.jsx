@@ -8,7 +8,8 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithRedirect,
+  getRedirectResult
 } from "firebase/auth";
 import { apiFetch, API_BASE } from "./utils/api";
 
@@ -25,6 +26,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [googleError, setGoogleError] = useState(null);
 
   // ─── ROLE STATE ─────────────────────────────────────────────────────────────
   // role: "normal" | "domain" | null
@@ -35,6 +37,11 @@ export function AuthProvider({ children }) {
   const lastLogoutRoleRef = useRef(null);
 
   useEffect(() => {
+    // Handle redirect result for Google sign-in
+    getRedirectResult(auth).catch((error) => {
+      setGoogleError(error.message || "Google sign-in failed. Try again.");
+    });
+
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         setUser(fbUser);
@@ -90,13 +97,29 @@ export function AuthProvider({ children }) {
   // ─── DOMAIN EXPERT LOGIN ───────────────────────────────────────────────────
   // Role will be set from server profile after onAuthStateChanged fires
   const signInAsDomain = async (email, password) => {
-    return await signInWithEmailAndPassword(auth, email, password);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const token = await getIdToken(cred.user);
+    const p = await apiFetch(`${API_BASE}/user/profile`, {}, token);
+    
+    if (p.role !== ROLE_DOMAIN && p.role !== 'admin') {
+      await fbSignOut(auth);
+      throw new Error("Access denied: Not an authorized domain expert.");
+    }
+    return cred;
   };
 
   // ─── STANDARD USER LOGIN ───────────────────────────────────────────────────
   // Role will be set from server profile after onAuthStateChanged fires
   const signInWithEmail = async (email, password) => {
-    return await signInWithEmailAndPassword(auth, email, password);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const token = await getIdToken(cred.user);
+    const p = await apiFetch(`${API_BASE}/user/profile`, {}, token);
+    
+    if (p.role === ROLE_DOMAIN) {
+      await fbSignOut(auth);
+      throw new Error("Please log in through the Domain Expert Portal.");
+    }
+    return cred;
   };
 
   const signUpWithEmail = async (email, password, name) => {
@@ -110,7 +133,7 @@ export function AuthProvider({ children }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    return await signInWithPopup(auth, provider);
+    return await signInWithRedirect(auth, provider);
   };
 
   // ─── CONTEXT VALUE ─────────────────────────────────────────────────────────
@@ -118,7 +141,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ 
-      user, profile, loading, role, isAuthenticated,
+      user, profile, loading, role, isAuthenticated, googleError, setGoogleError,
       getToken, refreshProfile, signOut, 
       signInWithEmail, signUpWithEmail, signInWithGoogle, signInAsDomain,
       lastLogoutRoleRef,

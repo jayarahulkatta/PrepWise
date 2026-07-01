@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 
 const css = `
@@ -21,7 +21,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); -webkit
 `;
 
 export default function AuthPage({ initialMode: initialModeProp, onBack }) {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDomain, lastLogoutRoleRef } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDomain, lastLogoutRoleRef, googleError, setGoogleError } = useAuth();
 
   // Use prop if provided (from landing page CTA), else fall back to logout-role logic
   const resolvedInitialMode = initialModeProp
@@ -33,6 +33,13 @@ export default function AuthPage({ initialMode: initialModeProp, onBack }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (googleError) {
+      setError(googleError);
+      setGoogleError(null);
+    }
+  }, [googleError, setGoogleError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,11 +77,9 @@ export default function AuthPage({ initialMode: initialModeProp, onBack }) {
       await signInWithGoogle();
       // Role is set to "interviewer" inside signInWithGoogle
     } catch (err) {
-      if (err.code !== "auth/popup-closed-by-user") {
-        setError("Google sign-in failed. Try again.");
-      }
+      setError("Google sign-in request failed.");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Whether we're in domain expert mode
